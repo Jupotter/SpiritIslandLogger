@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30717.126
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpiritIslandLogger", "SpiritIslandLogger\SpiritIslandLogger.csproj", "{74B4679A-60BF-459F-865B-50741C8EC693}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{74B4679A-60BF-459F-865B-50741C8EC693}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{74B4679A-60BF-459F-865B-50741C8EC693}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{74B4679A-60BF-459F-865B-50741C8EC693}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{74B4679A-60BF-459F-865B-50741C8EC693}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {112EB3CF-9CB8-4443-9221-0B1888467839}
+	EndGlobalSection
+EndGlobal
