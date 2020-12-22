@@ -7,6 +7,12 @@ namespace SpiritIslandLogger.Web.Data
 {
     public class ApplicationDbContext : IdentityDbContext
     {
+        public DbSet<Adversary>  Adversaries { get; set; } = null!;
+        public DbSet<Spirit>     Spirits     { get; set; } = null!;
+        public DbSet<Game>       Games       { get; set; } = null!;
+        public DbSet<Player>     Players     { get; set; } = null!;
+        public DbSet<GamePlayer> GamePlayers { get; set; } = null!;
+
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)
         {

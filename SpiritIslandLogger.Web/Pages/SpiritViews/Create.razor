@@ -1,0 +1,38 @@
+﻿@page "/spirit/create"
+@using System.ComponentModel.DataAnnotations
+@using SpiritIslandLogger.Web.Data
+@inject ApplicationDbContext Db
+@inject NavigationManager Navigation
+
+<h3>Create Spirit</h3>
+
+<EditForm Model="@spirit" OnValidSubmit="@FormSubmitted">
+    <DataAnnotationsValidator/>
+    <div class="form-group">
+        <label for="Name">Name</label>
+        <InputText @bind-Value="spirit.Name" class="form-control" id="Name"></InputText>
+        <ValidationMessage For="() => spirit.Name"/>
+    </div>
+    <input type="submit" value="Submit" class="btn btn-primary"/>
+</EditForm>
+
+@code {
+
+    public class CreateSpiritViewModel
+    {
+        [Required]
+        public string Name { get; set; } = "";
+    }
+    
+    readonly CreateSpiritViewModel spirit = new();
+
+    async Task FormSubmitted()
+    {
+        var newSpirit = new Spirit { Name = this.spirit.Name };
+        await Db.Spirits.AddAsync(newSpirit);
+        await Db.SaveChangesAsync();
+
+        Navigation.NavigateTo("/spirit");
+    }
+
+}

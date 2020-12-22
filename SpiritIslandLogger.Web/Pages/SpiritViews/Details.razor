@@ -1,0 +1,61 @@
+﻿@page "/spirit/{SpiritId:int}/details"
+
+@using SpiritIslandLogger.Web.Data
+@inject ApplicationDbContext DbContext
+@inject NavigationManager Navigation
+
+<h3>Spirit</h3>
+@if (spirit == null)
+{
+    <p>
+        <em>Loading...</em>
+    </p>
+}
+else
+{
+    <dl class="dl-horizontal">
+        <dt>
+            Name
+        </dt>
+        <dd>
+            @spirit.Name
+        </dd>
+    </dl>
+}
+
+<div>
+    @if (spirit is not null)
+    {
+        <NavLink href="@editUri"> Edit </NavLink>        @:|
+        <NavLink href="@deleteUri"> Delete </NavLink> @:|
+    }
+    <a href="/spirit">Back to List</a>
+</div>
+
+@code {
+#nullable enable
+
+    [Parameter]
+    public int? SpiritId { get; set; }
+
+    private Spirit? spirit;
+
+    private Uri? deleteUri;
+    private Uri? editUri;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await base.OnParametersSetAsync();
+
+        if (!SpiritId.HasValue)
+        {
+            Navigation.NavigateTo("/spirit");
+            return;
+        }
+
+        spirit = await DbContext.Spirits.FindAsync(SpiritId);
+        deleteUri = new Uri(new Uri(Navigation.Uri), "./delete");
+        editUri = new Uri(new Uri(Navigation.Uri), "./edit");
+    }
+
+}

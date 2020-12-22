@@ -1,0 +1,54 @@
+﻿@page "/spirits"
+@page "/spirit"
+
+@using SpiritIslandLogger.Web.Data
+@using Microsoft.EntityFrameworkCore
+@inject ApplicationDbContext Context
+
+<h3>Spirits</h3>
+
+<p><NavLink href="spirit/create">Create new</NavLink></p>
+@if (spirits == null)
+{
+    <p>
+        <em>Loading...</em>
+    </p>
+}
+else
+{
+    <table class="table">
+        <thead>
+        <tr>
+            <th>Id</th>
+            <th>Name</th>
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var spirit in spirits)
+        {
+            <tr>
+                <td>@spirit.Id</td>
+                <td>
+                    @{
+                        var link = $"/spirit/{spirit.Id}/details";
+                        <NavLink href="@link">
+                            <span>@spirit.Name</span>
+                        </NavLink>
+                    }
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}
+
+@code {
+#nullable enable
+    List<Spirit>? spirits;
+
+    protected override async Task OnInitializedAsync()
+    {
+        spirits = await Context.Spirits.ToListAsync();
+    }
+
+}

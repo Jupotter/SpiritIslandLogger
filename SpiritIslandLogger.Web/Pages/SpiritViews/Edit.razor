@@ -1,0 +1,75 @@
+﻿@page "/spirit/{SpiritId:int}/edit/"
+
+@using SpiritIslandLogger.Web.Data
+@inject ApplicationDbContext DbContext
+@inject NavigationManager Navigation
+
+<h2>Edit</h2>
+@if (spirit == null)
+{
+    <p>
+        <em>Loading...</em>
+    </p>
+}
+else
+{
+    <EditForm Model="@spirit" OnValidSubmit="@UpdateSpirit">
+        <DataAnnotationsValidator/>
+        <div class="form-group">
+            <label for="Name">Name</label>
+            <InputText @bind-Value="spirit.Name" class="form-control" id="Name"></InputText>
+            <ValidationMessage For="() => spirit.Name"/>
+        </div>
+        <input type="submit" value="Submit" class="btn btn-primary"/>
+    </EditForm>
+}
+
+@code {
+#nullable enable
+
+    [Parameter]
+    public int? SpiritId { get; set; }
+
+    private Spirit? spirit;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await base.OnParametersSetAsync();
+
+        if (!SpiritId.HasValue)
+        {
+            NavigateToIndex();
+            return;
+        }
+
+        spirit = await DbContext.Spirits.FindAsync(SpiritId);
+        if (spirit is null)
+        {
+            NavigateToIndex();
+        }
+    }
+
+    private async Task UpdateSpirit()
+    {
+        if (spirit is null)
+        {
+            NavigateToIndex();
+            return;
+        }
+
+        DbContext.Spirits.Update(spirit);
+        await DbContext.SaveChangesAsync();
+
+        NavigateToDetails();
+    }
+
+    private void NavigateToIndex()
+    {
+        Navigation.NavigateTo("/spirits");
+    }
+
+    private void NavigateToDetails()
+    {
+        Navigation.NavigateTo($"/spirit/{SpiritId}/details");
+    }
+}
