@@ -1,0 +1,89 @@
+﻿@page "/adversary/{AdversaryId:int}/details"
+
+@using SpiritIslandLogger.Web.Data
+@inject ApplicationDbContext DbContext
+@inject NavigationManager Navigation
+
+<h3>Spirit</h3>
+@if (adversary == null)
+{
+    <p>
+        <em>Loading...</em>
+    </p>
+}
+else
+{
+    <dl class="dl-horizontal">
+        <dt>
+            Name
+        </dt>
+        <dd>
+            @adversary.Name
+        </dd>
+    </dl>
+    <div>
+        <label for="difficulty">Difficulty</label>
+        <table id="difficulty">
+            <thead>
+            <tr>
+                <th>
+                    Base
+                </th>
+                @for (int i = 1; i <= 6; i++)
+                {
+                    <th>
+                        Level @i
+                    </th>
+                }
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                @foreach(var item in adversary.Difficulty)
+                {
+                    <td>
+                        @item
+                    </td>
+                }
+            </tr>
+            </tbody>
+        </table>
+    </div>
+}
+
+<div>
+    @if (adversary is not null)
+    {
+        <NavLink href="@editUri"> Edit </NavLink>        @:|
+        <NavLink href="@deleteUri"> Delete </NavLink> @:|
+    }
+    <a href="/adversaries">Back to List</a>
+</div>
+
+@code {
+#nullable enable
+
+    [Parameter]
+    public int? AdversaryId { get; set; }
+
+    private Adversary? adversary;
+
+    private Uri? deleteUri;
+    private Uri? editUri;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await base.OnParametersSetAsync();
+
+        if (!AdversaryId.HasValue)
+        {
+            Navigation.NavigateTo("/adversaries");
+            return;
+        }
+
+        adversary = await DbContext.Adversaries.FindAsync(AdversaryId);
+        deleteUri = new Uri(new Uri(Navigation.Uri), "./delete");
+        editUri = new Uri(new Uri(Navigation.Uri), "./edit");
+    }
+
+}

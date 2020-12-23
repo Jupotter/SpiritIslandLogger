@@ -1,4 +1,4 @@
-﻿@page "/spirit/{SpiritId:int}/delete/"
+﻿@page "/adversary/{AdversaryId:int}/delete/"
 
 @using SpiritIslandLogger.Web.Data
 @inject ApplicationDbContext DbContext
@@ -7,7 +7,7 @@
 <h2>Delete</h2>
 <h3>Are you sure you want to delete this?</h3>
 
-@if (spirit == null)
+@if (adversary == null)
 {
     <p>
         <em>Loading...</em>
@@ -20,49 +20,49 @@ else
             Name
         </dt>
         <dd>
-            @spirit.Name
+            @adversary.Name
         </dd>
     </dl>
 }
 
-<EditForm OnSubmit="DeleteSpirit" Model="SpiritId">
-    <input type="submit" value="Delete" class="btn btn-danger" />
-    <NavLink href="/adversaries"><button class="btn">Cancel</button></NavLink>
+<EditForm OnSubmit="DeleteItem" Model="AdversaryId">
+    <input type="submit" value="Delete" class="btn btn-danger" /> |
+    <NavLink href="./"><button class="btn">Cancel</button></NavLink>
 </EditForm>
 @code {
 #nullable enable
 
     [Parameter]
-    public int? SpiritId { get; set; }
+    public int? AdversaryId { get; set; }
 
-    private Spirit? spirit;
+    private Adversary? adversary;
 
     protected override async Task OnParametersSetAsync()
     {
         await base.OnParametersSetAsync();
 
-        if (!SpiritId.HasValue)
+        if (!AdversaryId.HasValue)
         {
             NavigateToIndex();
             return;
         }
 
-        spirit = await DbContext.Spirits.FindAsync(SpiritId);
-        if (spirit is null)
+        adversary = await DbContext.Adversaries.FindAsync(AdversaryId);
+        if (adversary is null)
         {
             NavigateToIndex();
         }
     }
 
-    private async Task DeleteSpirit()
+    private async Task DeleteItem()
     {
-        if (spirit is null)
+        if (adversary is null)
         {
             NavigateToIndex();
             return;
         }
 
-        DbContext.Spirits.Remove(spirit);
+        DbContext.Adversaries.Remove(adversary);
         await DbContext.SaveChangesAsync();
         
         NavigateToIndex();
@@ -70,6 +70,6 @@ else
 
     private void NavigateToIndex()
     {
-        Navigation.NavigateTo("/spirits");
+        Navigation.NavigateTo("/adversaries");
     }
 }

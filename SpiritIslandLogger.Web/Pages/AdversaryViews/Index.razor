@@ -1,0 +1,54 @@
+﻿@page "/adversaries"
+@page "/adversary"
+
+@using SpiritIslandLogger.Web.Data
+@using Microsoft.EntityFrameworkCore
+@inject ApplicationDbContext Context
+
+<h3>Adversaries</h3>
+
+<p><NavLink href="adversary/create">Create new</NavLink></p>
+@if (adversaries == null)
+{
+    <p>
+        <em>Loading...</em>
+    </p>
+}
+else
+{
+    <table class="table">
+        <thead>
+        <tr>
+            <th>Id</th>
+            <th>Name</th>
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var adversary in adversaries)
+        {
+            <tr>
+                <td>@adversary.Id</td>
+                <td>
+                    @{
+                        var link = $"/adversary/{adversary.Id}/details";
+                        <NavLink href="@link">
+                            <span>@adversary.Name</span>
+                        </NavLink>
+                    }
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}
+
+@code {
+#nullable enable
+    List<Adversary>? adversaries;
+
+    protected override async Task OnInitializedAsync()
+    {
+        adversaries = await Context.Adversaries.ToListAsync();
+    }
+
+}
