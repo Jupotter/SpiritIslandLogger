@@ -15,6 +15,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using SpiritIslandLogger.Web.ViewModel;
 
 namespace SpiritIslandLogger.Web
 {
@@ -39,6 +40,7 @@ namespace SpiritIslandLogger.Web
             services.AddScoped<AuthenticationStateProvider, RevalidatingIdentityAuthenticationStateProvider<IdentityUser>>();
             services.AddDatabaseDeveloperPageExceptionFilter();
             services.AddSingleton<WeatherForecastService>();
+            services.AddTransient<GameViewModel>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
