@@ -3,15 +3,17 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SpiritIslandLogger.Web.Data;
 
 namespace SpiritIslandLogger.Web.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20201224105739_Add adversary level type")]
+    partial class Addadversaryleveltype
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -258,7 +260,7 @@ namespace SpiritIslandLogger.Web.Data.Migrations
 
                     b.HasIndex("AdversaryId");
 
-                    b.ToTable("AdversaryLevels");
+                    b.ToTable("AdversaryLevel");
                 });
 
             modelBuilder.Entity("SpiritIslandLogger.Web.Data.Game", b =>

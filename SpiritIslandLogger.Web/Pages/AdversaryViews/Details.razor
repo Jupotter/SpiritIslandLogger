@@ -4,7 +4,7 @@
 @inject ApplicationDbContext DbContext
 @inject NavigationManager Navigation
 
-<h3>Spirit</h3>
+<h3>Adversary</h3>
 @if (adversary == null)
 {
     <p>
@@ -22,30 +22,43 @@ else
         </dd>
     </dl>
     <div>
-        <label for="difficulty">Difficulty</label>
-        <table id="difficulty">
+        <label for="Levels">Levels</label>
+        <table id="Levels">
             <thead>
-            <tr>
-                <th>
-                    Base
-                </th>
-                @for (int i = 1; i <= 6; i++)
-                {
+                <tr>
+
+                    <th></th>
                     <th>
-                        Level @i
+                        Base
                     </th>
-                }
-            </tr>
+                    @for (int i = 1; i <= 6; i++)
+                    {
+                        <th>
+                            Level @i
+                        </th>
+                    }
+                </tr>
             </thead>
             <tbody>
-            <tr>
-                @foreach(var item in adversary.Difficulty)
-                {
-                    <td>
-                        @item
-                    </td>
-                }
-            </tr>
+                <tr>
+                    <th>Difficulty</th>
+                    @foreach (var item in adversary.Levels)
+                    {
+                        <td>
+                            @item.Difficulty
+                        </td>
+                    }
+                </tr>
+
+                <tr>
+                    <th>Deck Size</th>
+                    @foreach (var item in adversary.Levels)
+                    {
+                        <td>
+                            @item.DeckSize
+                        </td>
+                    }
+                </tr>
             </tbody>
         </table>
     </div>
@@ -82,6 +95,15 @@ else
         }
 
         adversary = await DbContext.Adversaries.FindAsync(AdversaryId);
+        if (adversary == null)
+        {
+            Navigation.NavigateTo("/adversaries");
+            return;
+        }
+        if (adversary.Levels == null)
+        {
+            adversary.Levels = new List<AdversaryLevel>();
+        }
         deleteUri = new Uri(new Uri(Navigation.Uri), "./delete");
         editUri = new Uri(new Uri(Navigation.Uri), "./edit");
     }

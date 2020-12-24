@@ -6,7 +6,7 @@
 @inject NavigationManager Navigation
 
 <h2>Edit</h2>
-@if (adversaryVm == null)
+@if (adversary == null)
 {
     <p>
         <em>Loading...</em>
@@ -14,18 +14,20 @@
 }
 else
 {
-    <EditForm Model="@adversaryVm" OnValidSubmit="@UpdateSpirit">
+    <EditForm Model="@adversary" OnValidSubmit="@UpdateSpirit">
         <DataAnnotationsValidator/>
         <div class="form-group">
             <label for="Name">Name</label>
-            <InputText @bind-Value="adversaryVm.Name" class="form-control" id="Name"></InputText>
-            <ValidationMessage For="() => adversaryVm.Name"/>
+            <InputText @bind-Value="adversary.Name" class="form-control" id="Name"></InputText>
+            <ValidationMessage For="() => adversary.Name"/>
         </div>
         <div class="form-group">
-            <label for="difficulty">Difficulty</label>
-            <table id="difficulty">
+            <label for="Levels">Levels</label>
+            <table id="Levels">
                 <thead>
                 <tr>
+                    <th>
+                    </th>
                     <th>
                         Base
                     </th>
@@ -39,10 +41,20 @@ else
                 </thead>
                 <tbody>
                 <tr>
-                    @foreach (var id in adversaryVm.Difficulty.Select((item, id) => id))
+                    <th>Difficulty</th>
+                    @foreach (var id in adversary.Levels.Select((item, id) => id))
                     {
                         <td>
-                            <InputNumber @bind-Value="adversaryVm.Difficulty[id].Value"></InputNumber>
+                            <InputNumber @bind-Value="adversary.Levels[id].Difficulty"></InputNumber>
+                        </td>
+                    }
+                </tr>
+                <tr>
+                    <th>Deck Size</th>
+                    @foreach (var id in adversary.Levels.Select((item, id) => id))
+                    {
+                        <td>
+                            <InputNumber @bind-Value="adversary.Levels[id].DeckSize"></InputNumber>
                         </td>
                     }
                 </tr>
@@ -54,26 +66,12 @@ else
 
 @code {
 #nullable enable
-
-    private class BoxedInt
-    {
-        [Range(1, 11)]
-        public int Value { get; set; }
-    }
-
-    private class AdversaryViewModel
-    {
-        [Required]
-        public string Name { get; set; } = "";
-
-        public BoxedInt[] Difficulty { get; init; } = Enumerable.Range(1, 7).Select(i => new BoxedInt { Value = i }).ToArray();
-    }
+    
 
     [Parameter]
     public int? AdversaryId { get; set; }
 
     private Adversary? adversary;
-    private AdversaryViewModel? adversaryVm;
 
     protected override async Task OnParametersSetAsync()
     {
@@ -91,11 +89,11 @@ else
             NavigateToIndex();
             return;
         }
-        adversaryVm = new AdversaryViewModel
-                      {
-                          Name = adversary.Name,
-                          Difficulty = adversary.Difficulty.Select(v => new BoxedInt { Value = v }).ToArray(),
-                      };
+
+        if (adversary.Levels == null || adversary.Levels.Count < 7)
+        {
+            adversary.Levels = Enumerable.Range(0, 7).Select(i => new AdversaryLevel { Level = i, Difficulty = i + 1}).ToList();
+        }
     }
 
     private async Task UpdateSpirit()
@@ -105,9 +103,6 @@ else
             NavigateToIndex();
             return;
         }
-
-        adversary.Name = adversaryVm.Name;
-        adversary.Difficulty = adversaryVm.Difficulty.Select(v => v.Value).ToArray();
 
         DbContext.Adversaries.Update(adversary);
         await DbContext.SaveChangesAsync();

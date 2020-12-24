@@ -15,10 +15,12 @@
     </div>
 
     <div class="form-group">
-        <label for="difficulty">Difficulty</label>
+        <label for="difficulty">Levels</label>
         <table id="difficulty">
             <thead>
             <tr>
+                <th>
+                </th>
                 <th>
                     Base
                 </th>
@@ -32,10 +34,22 @@
             </thead>
             <tbody>
                 <tr>
-                    @foreach(var id in adversary.Difficulty.Select((item, id) => id))
+                    <th>Difficulty</th>
+
+                    @foreach (var id in adversary.Levels.Select((item, id) => id))
+                    {
+                        adversary.Levels[id].Level = id;
+                        <td>
+                            <InputNumber @bind-Value="adversary.Levels[id].Difficulty"></InputNumber>
+                        </td>
+                    }
+                </tr>
+                <tr>
+                    <th>Deck Size</th>
+                    @foreach (var id in adversary.Levels.Select((item, id) => id))
                     {
                         <td>
-                            <InputNumber @bind-Value="adversary.Difficulty[id].Value"></InputNumber>
+                            <InputNumber @bind-Value="adversary.Levels[id].DeckSize"></InputNumber>
                         </td>
                     }
                 </tr>
@@ -57,15 +71,15 @@
     {
         [Required]
         public string Name { get; set; } = "";
-        public BoxedInt[] Difficulty { get; } = Enumerable.Range(1, 7).Select(i => new BoxedInt{Value = i}).ToArray();
+
+        public BoxedInt[] Difficulty { get; } = Enumerable.Range(1, 7).Select(i => new BoxedInt { Value = i }).ToArray();
     }
 
-    readonly AdversaryViewModel adversary = new();
+    readonly Adversary adversary = new() {Levels = Enumerable.Range(0, 7).Select(i => new AdversaryLevel{Level = i, Difficulty = i }).ToList()};
 
     async Task FormSubmitted()
     {
-        var newAdversary = new Adversary{Name = adversary.Name, Difficulty = adversary.Difficulty.Select(v => v.Value).ToArray()};
-        await Db.Adversaries.AddAsync(newAdversary);
+        await Db.Adversaries.AddAsync(adversary);
         await Db.SaveChangesAsync();
 
         Navigation.NavigateTo("/adversary");

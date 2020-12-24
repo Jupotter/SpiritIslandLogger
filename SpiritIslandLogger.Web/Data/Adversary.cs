@@ -1,26 +1,27 @@
-﻿using System;
-using System.ComponentModel;
+﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.Linq;
 
 namespace SpiritIslandLogger.Web.Data
 {
     public class Adversary
     {
-        public int    Id   { get; set; }
-        
+        public int Id { get; set; }
+
         public string Name { get; set; } = null!;
 
-        [NotMapped]
-        public int[] Difficulty { get; set; } = new int[7];
+        public virtual IList<AdversaryLevel>? Levels { get; set; } = null;
+    }
 
+    public class AdversaryLevel
+    {
+        public int Id { get; set; }
 
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public string MappedDifficulty
-        {
-            get => string.Join(';', Difficulty);
-            set => Difficulty = value.Split(';', StringSplitOptions.RemoveEmptyEntries).Select(int.Parse).ToArray();
-        }
+        [Required] public Adversary Adversary { get; set; } = null!;
+
+        [Required] public int Level { get; set; }
+
+        [Range(0, 11)] public int Difficulty { get; set; }
+
+        [Range(1, int.MaxValue)] public int DeckSize { get; set; } = 12;
     }
 }
