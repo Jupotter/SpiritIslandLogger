@@ -1,0 +1,185 @@
+﻿@page "/game/{GameId:int}/edit"
+@page "/game/create"
+
+@using SpiritIslandLogger.Web.ViewModel
+
+@inject NavigationManager Navigation
+@inject GameViewModel ViewModel
+
+<h3>Create</h3>
+
+<EditForm Model="@ViewModel" OnValidSubmit="@SubmitFormAsync">
+    <DataAnnotationsValidator/>
+    <div class="form-group row">
+        <label for="Date" class="col-sm-2 col-form-label">Date</label>
+        <div class="col-sm-10">
+            <InputDate @bind-Value="ViewModel.Date" class="form-control" id="Date"></InputDate>
+            <ValidationMessage For="() => ViewModel.Date"/>
+        </div>
+
+    </div>
+    <div class="form-group row">
+        <div class="form-check">
+            <InputCheckbox @bind-Value="ViewModel.Victory" class="form-check-input" id="Victory"></InputCheckbox>
+            <label for="Victory" class="form-check-label">Victory</label>
+        </div>
+        <ValidationMessage For="() => ViewModel.Victory"/>
+    </div>
+
+    <div class="form-group row">
+        <div class="form-check">
+            <InputCheckbox @bind-Value="ViewModel.Blighted" class="form-check-input" id="Blighted"></InputCheckbox>
+            <label for="Blighted" class="form-check-label">Blighted Island</label>
+        </div>
+        <ValidationMessage For="() => ViewModel.Blighted"/>
+    </div>
+    <div class="form-group row">
+        <label for="Adversary" class="col-sm-2 col-form-label">Adversary</label>
+        <div class="col-sm-10">
+            <InputSelect @bind-Value="ViewModel.AdversaryId" class="form-check-input" id="Adversary">
+                <option value="">None</option>
+                @foreach (var adversary in ViewModel.Adversaries)
+                {
+                    <option value="@adversary.Id">@adversary.Name</option>
+                }
+            </InputSelect>
+        </div>
+        <ValidationMessage For="() => ViewModel.AdversaryId"/>
+    </div>
+    @if (ViewModel.AdversaryId.HasValue && ViewModel.AdversaryId != 0)
+    {
+        <div class="form-group row">
+            <label for="AdversaryLvl" class="col-sm-2 col-form-label">Adversary Level</label>
+            <div class="col-sm-10">
+                <InputNumber @bind-Value="ViewModel.AdversaryLevel" class="form-check-input" id="AdversaryLvl">
+
+                </InputNumber>
+            </div>
+            <ValidationMessage For="() => ViewModel.AdversaryLevel"/>
+        </div>
+    }
+
+    <div class="form-group row">
+        <label for="DahanLeft" class="col-sm-2 col-form-label">Dahan on the island</label>
+        <div class="col-sm-10">
+            <InputNumber @bind-Value="ViewModel.DahanLeft" class="form-check-input" id="DahanLeft">
+
+            </InputNumber>
+        </div>
+        <ValidationMessage For="() => ViewModel.DahanLeft"/>
+    </div>
+    <div class="form-group row">
+        <label for="BlightLeft" class="col-sm-2 col-form-label">Blight on the island</label>
+        <div class="col-sm-10">
+            <InputNumber @bind-Value="ViewModel.BlightLeft" class="form-check-input" id="BlightLeft">
+
+            </InputNumber>
+        </div>
+        <ValidationMessage For="() => ViewModel.BlightLeft"/>
+    </div>
+    <div class="form-group row">
+        <label for="CardsLeft" class="col-sm-2 col-form-label">Invader Cards left</label>
+        <div class="col-sm-10">
+            <InputNumber @bind-Value="ViewModel.CardsLeft" class="form-check-input" id="CardsLeft">
+
+            </InputNumber>
+        </div>
+        <ValidationMessage For="() => ViewModel.CardsLeft"/>
+    </div>
+    <div class="form-group row">
+        <label for="FearLevel" class="col-sm-2 col-form-label">Final fear level</label>
+        <div class="col-sm-10">
+            <InputNumber @bind-Value="ViewModel.FearLevel" class="form-check-input" id="FearLevel">
+
+            </InputNumber>
+        </div>
+        <ValidationMessage For="() => ViewModel.FearLevel"/>
+    </div>
+    <div class="form-group row">
+        <label for="Score" class="col-sm-2 col-form-label">Score</label>
+        <div class="col-sm-10">
+            <InputNumber @bind-Value="ViewModel.Score" class="form-check-input" id="Score">
+
+            </InputNumber>
+        </div>
+        <ValidationMessage For="() => ViewModel.Score"/>
+    </div>
+
+    <div class="form-group row">
+        <label for="PlayerCount" class="col-sm-2 col-form-label">Player Count</label>
+        <div class="col-sm-10">
+            <InputNumber @bind-Value="ViewModel.PlayerCount" class="form-control" id="PlayerCount"></InputNumber>
+            <ValidationMessage For="() => ViewModel.PlayerCount"/>
+        </div>
+    </div>
+    <div class="form-group">
+        <table class="table">
+            <thead>
+            <tr>
+                <th scope="col">New</th>
+                <th scope="col">Player</th>
+                <th scope="col">Spirit</th>
+            </tr>
+            </thead>
+            <tbody>
+            @foreach (var player in ViewModel.GamePlayers)
+            {
+                <tr>
+                    <td>
+                        <InputCheckbox @bind-Value="player.NewPlayer"></InputCheckbox>
+                    </td>
+                    <td>
+                        @if (player.NewPlayer)
+                        {
+                            <InputText @bind-Value="player.NewPlayerName"></InputText>                        }
+                        else
+                        {
+                            <InputSelect @bind-Value="player.PlayerId" class="form-check-input">
+                                @foreach (var knownPlayer in ViewModel.KnownPlayers)
+                                {
+                                    <option value="@knownPlayer.Id">@knownPlayer.Name</option>
+                                }
+                            </InputSelect>                        }
+                    </td>
+                    <td>
+                        <InputSelect @bind-Value="player.SpiritId" class="form-check-input">
+                            @foreach (var spirit in ViewModel.Spirits)
+                            {
+                                <option value="@spirit.Id">@spirit.Name</option>
+                            }
+                        </InputSelect>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+
+    <input type="submit" value="Submit" class="btn btn-primary"/>
+</EditForm>
+
+@code {
+#nullable enable
+
+    [Parameter]
+    public int? GameId { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        await ViewModel.InitializeAsync();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await base.OnParametersSetAsync();
+        await ViewModel.LoadGameAsync(GameId);
+    }
+
+    private Task SubmitFormAsync()
+    {
+        ViewModel.SaveGameAsync().ContinueWith(_ => Navigation.NavigateTo(GameId.HasValue ? $"/game/{GameId}/details" : "/games"));
+        return Task.CompletedTask;
+    }
+
+}

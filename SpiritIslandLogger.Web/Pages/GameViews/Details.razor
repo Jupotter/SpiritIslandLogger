@@ -1,0 +1,116 @@
+﻿@page "/game/{GameId:int}/details"
+
+@using SpiritIslandLogger.Web.Data
+@using Microsoft.EntityFrameworkCore
+@inject ApplicationDbContext DbContext
+@inject NavigationManager Navigation
+
+<h3>Game</h3>
+@if (game == null)
+{
+    <p>
+        <em>Loading...</em>
+    </p>
+}
+else
+{
+    <dl class="dl-horizontal">
+        <dt>
+            Date
+        </dt>
+        <dd>
+            @game.Date.ToString("D")
+        </dd>
+        <dt>
+            Victory
+        </dt>
+        <dd>
+            @game.Victory
+        </dd>
+        <dt>
+            Blighted Island
+        </dt>
+        <dd>
+            @game.BlightedIsland
+        </dd>
+
+        <dt>
+            Score
+        </dt>
+        <dd>
+            @game.RealScore
+        </dd>
+    </dl>
+    <div>
+        <table id="players" class="table">
+            <thead>
+            <tr>
+                <th scope="col">
+                    Player
+                </th>
+                <th scope="col">
+                    Spirit
+                </th>
+            </tr>
+            </thead>
+            <tbody>
+            @foreach (var player in game.Players)
+            {
+                <tr>
+                    <td>@player.Player.Name</td>
+                    <td>@player.Spirit.Name</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+}
+
+<div>
+    @if (game is not null)
+    {
+        <NavLink href="@editUri"> Edit </NavLink>        @:|
+        <NavLink href="@deleteUri"> Delete </NavLink>        @:|
+    }
+    <a href="/games">Back to List</a>
+</div>
+
+@code {
+#nullable enable
+
+    [Parameter]
+    public int? GameId { get; set; }
+
+    private Game? game;
+
+    private Uri? deleteUri;
+    private Uri? editUri;
+    
+    protected override async Task OnParametersSetAsync()
+    {
+        await base.OnParametersSetAsync();
+
+        if (!GameId.HasValue)
+        {
+            Navigation.NavigateTo("/games");
+            return;
+        }
+
+        game = await DbContext.Games
+                              .Include(g => g.Adversary)
+                              .ThenInclude(a => a.Levels)
+                              .Include(g => g.Players)
+                              .ThenInclude(gp => gp.Player)
+                              .Include(g => g.Players)
+                              .ThenInclude(gp => gp.Spirit)
+                              .FirstOrDefaultAsync(g => g.Id == GameId);
+        if (game is null)
+        {
+            Navigation.NavigateTo("/games");
+            return;
+        }
+        deleteUri = new Uri(new Uri(Navigation.Uri), "./delete");
+        editUri = new Uri(new Uri(Navigation.Uri), "./edit");
+    }
+
+}

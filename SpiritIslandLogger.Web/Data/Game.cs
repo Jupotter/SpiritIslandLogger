@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
 
 namespace SpiritIslandLogger.Web.Data
 {
@@ -37,10 +38,11 @@ namespace SpiritIslandLogger.Web.Data
 
                     int difficulty = 0;
                     int deckSize   = 12;
-                    if (Adversary != null && AdversaryLevel.HasValue)
+                    if (Adversary != null && AdversaryLevel.HasValue && Adversary.Levels != null)
                     {
-                        difficulty = Adversary.Levels[AdversaryLevel.Value].Difficulty;
-                        deckSize = Adversary.Levels[AdversaryLevel.Value].DeckSize;
+                        var level = Adversary.Levels.First(l => l.Level == AdversaryLevel.Value);
+                        difficulty = level.Difficulty;
+                        deckSize = level.DeckSize;
                     }
 
                     if (Victory)

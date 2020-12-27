@@ -1,6 +1,7 @@
 ﻿@page "/adversary/{AdversaryId:int}/details"
 
 @using SpiritIslandLogger.Web.Data
+@using Microsoft.EntityFrameworkCore
 @inject ApplicationDbContext DbContext
 @inject NavigationManager Navigation
 
@@ -25,40 +26,40 @@ else
         <label for="Levels">Levels</label>
         <table id="Levels">
             <thead>
-                <tr>
+            <tr>
 
-                    <th></th>
+                <th></th>
+                <th>
+                    Base
+                </th>
+                @for (int i = 1; i <= 6; i++)
+                {
                     <th>
-                        Base
+                        Level @i
                     </th>
-                    @for (int i = 1; i <= 6; i++)
-                    {
-                        <th>
-                            Level @i
-                        </th>
-                    }
-                </tr>
+                }
+            </tr>
             </thead>
             <tbody>
-                <tr>
-                    <th>Difficulty</th>
-                    @foreach (var item in adversary.Levels)
-                    {
-                        <td>
-                            @item.Difficulty
-                        </td>
-                    }
-                </tr>
+            <tr>
+                <th>Difficulty</th>
+                @foreach (var item in adversary.Levels.OrderBy(l => l.Level))
+                {
+                    <td>
+                        @item.Difficulty
+                    </td>
+                }
+            </tr>
 
-                <tr>
-                    <th>Deck Size</th>
-                    @foreach (var item in adversary.Levels)
-                    {
-                        <td>
-                            @item.DeckSize
-                        </td>
-                    }
-                </tr>
+            <tr>
+                <th>Deck Size</th>
+                @foreach (var item in adversary.Levels.OrderBy(l => l.Level))
+                {
+                    <td>
+                        @item.DeckSize
+                    </td>
+                }
+            </tr>
             </tbody>
         </table>
     </div>
@@ -68,7 +69,7 @@ else
     @if (adversary is not null)
     {
         <NavLink href="@editUri"> Edit </NavLink>        @:|
-        <NavLink href="@deleteUri"> Delete </NavLink> @:|
+        <NavLink href="@deleteUri"> Delete </NavLink>        @:|
     }
     <a href="/adversaries">Back to List</a>
 </div>
@@ -94,7 +95,7 @@ else
             return;
         }
 
-        adversary = await DbContext.Adversaries.FindAsync(AdversaryId);
+        adversary = await DbContext.Adversaries.Include(a => a.Levels).FirstOrDefaultAsync(a => a.Id == AdversaryId);
         if (adversary == null)
         {
             Navigation.NavigateTo("/adversaries");

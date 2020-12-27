@@ -1,0 +1,106 @@
+﻿@page "/game"
+@page "/games"
+@using SpiritIslandLogger.Web.Data
+@using Microsoft.EntityFrameworkCore
+@inject ApplicationDbContext Context
+
+<h3>Games</h3>
+
+<p>
+    <NavLink href="game/create">Create new</NavLink>
+</p>
+@if (games == null)
+{
+    <p>
+        <em>Loading...</em>
+    </p>
+}
+else
+{
+    <table class="table">
+        <thead>
+        <tr>
+            <th>Id</th>
+            <th>Date</th>
+            <th>Players</th>
+            <th>Adversary</th>
+            <th>Level</th>
+            <th>Victory</th>
+            <th>Score</th>
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var game in games)
+        {
+            <tr>
+                @{
+                    var link = $"/game/{game.Id}/details";
+                    <td>@game.Id</td>
+                    <td>
+                        <NavLink href="@link">
+                            @game.Date.ToString("D")
+                        </NavLink>
+                    </td>
+                    <td>
+                        <NavLink href="@link">
+                            @game.Players.Count
+                        </NavLink>
+                    </td>
+                    <td>
+                        <NavLink href="@link">
+                            @if (game.Adversary != null)
+                            {
+                                <span>@game.Adversary.Name</span>
+                            }
+                            else
+                            {
+                                <span>None</span>
+                            }
+                        </NavLink>
+                    </td>
+
+                    <td>
+                        <NavLink href="@link">
+                            @if (game.AdversaryLevel.HasValue)
+                            {
+                                <span>@game.AdversaryLevel</span>
+                            }
+                            else
+                            {
+                                <span>-</span>
+                            }
+                        </NavLink>
+                    </td>
+
+                    <td>
+                        <NavLink href="@link">
+                            @game.Victory
+                        </NavLink>
+                    </td>
+
+                    <td>
+                        <NavLink href="@link">
+                            @game.RealScore
+                        </NavLink>
+                    </td>
+                }
+            </tr>
+        }
+        </tbody>
+    </table>
+}
+
+@code {
+#nullable enable
+    List<Game>? games;
+
+    protected override async Task OnInitializedAsync()
+    {
+        games = await Context.Games
+                             .Include(g => g.Players)
+                             .Include(g => g.Adversary)
+                             .ThenInclude(a => a.Levels)
+                             .ToListAsync();
+    }
+
+}
