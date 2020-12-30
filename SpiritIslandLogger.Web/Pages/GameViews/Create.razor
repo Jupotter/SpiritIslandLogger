@@ -18,24 +18,14 @@
         </div>
 
     </div>
-    <div class="form-group row">
-        <div class="form-check">
-            <InputCheckbox @bind-Value="ViewModel.Victory" class="form-check-input" id="Victory"></InputCheckbox>
-            <label for="Victory" class="form-check-label">Victory</label>
-        </div>
-        <ValidationMessage For="() => ViewModel.Victory"/>
-    </div>
 
     <div class="form-group row">
         <div class="form-check">
-            <InputCheckbox @bind-Value="ViewModel.Blighted" class="form-check-input" id="Blighted"></InputCheckbox>
-            <label for="Blighted" class="form-check-label">Blighted Island</label>
         </div>
-        <ValidationMessage For="() => ViewModel.Blighted"/>
     </div>
     <div class="form-group row">
         <label for="Adversary" class="col-sm-2 col-form-label">Adversary</label>
-        <div class="col-sm-10">
+        <div class="col-sm-2">
             <InputSelect @bind-Value="ViewModel.AdversaryId" class="form-check-input" id="Adversary">
                 <option value="">None</option>
                 @foreach (var adversary in ViewModel.Adversaries)
@@ -44,76 +34,82 @@
                 }
             </InputSelect>
         </div>
-        <ValidationMessage For="() => ViewModel.AdversaryId"/>
-    </div>
-    @if (ViewModel.AdversaryId.HasValue && ViewModel.AdversaryId != 0)
-    {
-        <div class="form-group row">
+
+        @if (ViewModel.AdversaryId.HasValue && ViewModel.AdversaryId != 0)
+        {
             <label for="AdversaryLvl" class="col-sm-2 col-form-label">Adversary Level</label>
-            <div class="col-sm-10">
-                <InputNumber @bind-Value="ViewModel.AdversaryLevel" class="form-check-input" id="AdversaryLvl">
-
-                </InputNumber>
+            <div class="col-sm-2">
+                <InputNumber @bind-Value="ViewModel.AdversaryLevel" class="form-check-input" id="AdversaryLvl"/>
             </div>
-            <ValidationMessage For="() => ViewModel.AdversaryLevel"/>
-        </div>
-    }
+        }
+        <ValidationMessage For="() => ViewModel.AdversaryId"/>
+        <ValidationMessage For="() => ViewModel.AdversaryLevel"/>
+    </div>
 
-<div class="form-group row">
-    <label for="DahanLeft" class="col-sm-2 col-form-label">Dahan on the island</label>
-    <div class="col-sm-2">
-        <InputNumber @bind-Value="ViewModel.DahanLeft" class="form-check-input" id="DahanLeft">
-        </InputNumber>
+    <div class="form-group row">
+        <label for="DahanLeft" class="col-sm-2 col-form-label">Dahan on the island</label>
+        <div class="col-sm-2">
+            <InputNumber @bind-Value="ViewModel.DahanLeft" class="form-check-input" id="DahanLeft">
+            </InputNumber>
+        </div>
+        <div class="col-sm-8">
+            Or <InputNumber @bind-Value="ViewModel.DahanGroups"/> groups of @ViewModel.PlayerCount Dahans plus <InputNumber @bind-Value="ViewModel.DahanRemainder"/>
+        </div>
+        <ValidationMessage For="() => ViewModel.DahanLeft"/>
     </div>
-    <div class="col-sm-8">
-        Or <InputNumber @bind-Value="ViewModel.DahanGroups" /> groups of @ViewModel.PlayerCount Dahans plus <InputNumber @bind-Value="ViewModel.DahanRemainder" />
-    </div>
-    <ValidationMessage For="() => ViewModel.DahanLeft" />
-</div>
     <div class="form-group row">
         <label for="BlightLeft" class="col-sm-2 col-form-label">Blight on the island</label>
         <div class="col-sm-2">
             <InputNumber @bind-Value="ViewModel.BlightLeft" class="form-check-input" id="BlightLeft"/>
         </div>
         <div class="col-sm-8">
-            Or <InputNumber @bind-Value="ViewModel.BlightGroups" /> groups of @ViewModel.PlayerCount Blight plus <InputNumber @bind-Value="ViewModel.BlightRemainder" />
+            Or <InputNumber @bind-Value="ViewModel.BlightGroups"/> groups of @ViewModel.PlayerCount Blight plus <InputNumber @bind-Value="ViewModel.BlightRemainder"/>
         </div>
         <ValidationMessage For="() => ViewModel.BlightLeft"/>
     </div>
     <div class="form-group row">
-        <label for="CardsLeft" class="col-sm-2 col-form-label">Invader Cards left</label>
-        <div class="col-sm-10">
-            <InputNumber @bind-Value="ViewModel.CardsLeft" class="form-check-input" id="CardsLeft">
+    </div>
+    <div class="form-group row">
 
-            </InputNumber>
+        <label for="CardsLeft" class="col-sm-2 col-form-label">Invader Cards left</label>
+        <div class="col-sm-2">
+            <InputNumber @bind-Value="ViewModel.CardsLeft" class="form-check-input" id="CardsLeft"/>
+        </div>
+        <label for="FearLevel" class="col-sm-2 col-form-label">Final fear level</label>
+        <div class="col-sm-2">
+            <InputNumber @bind-Value="ViewModel.FearLevel" class="form-check-input" id="FearLevel"/>
         </div>
         <ValidationMessage For="() => ViewModel.CardsLeft"/>
-    </div>
-    <div class="form-group row">
-        <label for="FearLevel" class="col-sm-2 col-form-label">Final fear level</label>
-        <div class="col-sm-10">
-            <InputNumber @bind-Value="ViewModel.FearLevel" class="form-check-input" id="FearLevel">
-
-            </InputNumber>
-        </div>
         <ValidationMessage For="() => ViewModel.FearLevel"/>
     </div>
-    <div class="form-group row">
-        <label for="Score" class="col-sm-2 col-form-label">Score</label>
-        <div class="col-sm-10">
-            <InputNumber @bind-Value="ViewModel.Score" class="form-check-input" id="Score">
 
-            </InputNumber>
+    <div class="form-group row">
+        <div class="col-sm-2"></div>
+        <div class="col-sm-2">
+            <InputCheckbox @bind-Value="ViewModel.Victory" class="form-check-input" id="Victory"></InputCheckbox>
+            <label for="Victory" class="form-check-label">Victory</label>
+        </div>
+        <div class="col-sm-2">
+
+            <InputCheckbox @bind-Value="ViewModel.Blighted" class="form-check-input" id="Blighted"></InputCheckbox>
+            <label for="Blighted" class="form-check-label">Blighted Island</label>
+        </div>
+        <ValidationMessage For="() => ViewModel.Victory"/>
+        <ValidationMessage For="() => ViewModel.Blighted"/>
+    </div>
+    <div class="form-group row">
+        <label for="Score" class="col-sm-2 col-form-label">Score (optional)</label>
+        <div class="col-sm-2">
+            <InputNumber @bind-Value="ViewModel.Score" class="form-check-input" id="Score"/>
         </div>
         <ValidationMessage For="() => ViewModel.Score"/>
     </div>
-
     <div class="form-group row">
         <label for="PlayerCount" class="col-sm-2 col-form-label">Player Count</label>
         <div class="col-sm-10">
-            <InputNumber @bind-Value="ViewModel.PlayerCount" class="form-control" id="PlayerCount"></InputNumber>
-            <ValidationMessage For="() => ViewModel.PlayerCount"/>
+            <InputNumber @bind-Value="ViewModel.PlayerCount" class="form-control" id="PlayerCount"/>
         </div>
+        <ValidationMessage For="() => ViewModel.PlayerCount"/>
     </div>
     <div class="form-group">
         <table class="table">
