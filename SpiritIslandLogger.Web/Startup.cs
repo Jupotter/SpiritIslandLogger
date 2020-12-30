@@ -15,6 +15,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using SpiritIslandLogger.Web.Areas.Identity.Data;
 using SpiritIslandLogger.Web.ViewModel;
 
 namespace SpiritIslandLogger.Web
@@ -37,7 +38,7 @@ namespace SpiritIslandLogger.Web
                     Configuration.GetConnectionString("DefaultConnection")));
             services.AddRazorPages();
             services.AddServerSideBlazor();
-            services.AddScoped<AuthenticationStateProvider, RevalidatingIdentityAuthenticationStateProvider<IdentityUser>>();
+            services.AddScoped<AuthenticationStateProvider, RevalidatingIdentityAuthenticationStateProvider<MyIdentityUser>>();
             services.AddDatabaseDeveloperPageExceptionFilter();
             services.AddTransient<GameViewModel>();
         }
