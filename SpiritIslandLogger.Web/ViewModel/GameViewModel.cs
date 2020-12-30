@@ -41,10 +41,68 @@ namespace SpiritIslandLogger.Web.ViewModel
         public               int? AdversaryId    { get; set; }
         [Range(0, 6)] public int? AdversaryLevel { get; set; }
 
-        [Range(0, int.MaxValue)] public int? DahanLeft  { get; set; }
-        [Range(0, int.MaxValue)] public int? BlightLeft { get; set; }
-        [Range(0, int.MaxValue)] public int? CardsLeft  { get; set; }
-        [Range(0, int.MaxValue)] public int? Score      { get; set; }
+        [Range(0, int.MaxValue)]
+        public int? DahanGroups
+        {
+            get => PlayerCount > 0 ? DahanLeft / PlayerCount : null;
+            set => DahanLeft = value * PlayerCount + DahanRemainder;
+        }
+
+        [Range(0, int.MaxValue)]
+        public int? DahanRemainder
+        {
+            get => this.dahanRemainder;
+            set
+            {
+                this.dahanRemainder = value;
+                DahanLeft = DahanGroups * PlayerCount + DahanRemainder;
+            }
+        }
+
+        [Range(0, int.MaxValue)]
+        public int? DahanLeft
+        {
+            get => this.dahanLeft;
+            set
+            {
+                this.dahanLeft = value;
+                if (this.playerCount != 0)
+                    this.dahanRemainder = this.dahanLeft % this.playerCount;
+            }
+        }
+
+        [Range(0, int.MaxValue)]
+        public int? BlightGroups
+        {
+            get => PlayerCount > 0 ? BlightLeft / PlayerCount : null;
+            set => BlightLeft = value * PlayerCount + BlightRemainder;
+        }
+
+        [Range(0, int.MaxValue)]
+        public int? BlightRemainder
+        {
+            get => this.blightRemainder;
+            set
+            {
+                this.blightRemainder = value;
+                BlightLeft = BlightGroups * PlayerCount + BlightRemainder;
+            }
+        }
+
+        [Range(0, int.MaxValue)]
+        public int? BlightLeft
+        {
+            get => this.blightLeft;
+            set
+            {
+                this.blightLeft = value;
+                if (this.playerCount != 0)
+                    this.blightRemainder = this.blightLeft % this.playerCount;
+            }
+        }
+
+        [Range(0, int.MaxValue)] public int? CardsLeft { get; set; }
+        [Range(0, int.MaxValue)] public int? Score     { get; set; }
 
         [Range(1, 4)] public int? FearLevel { get; set; }
 
@@ -84,6 +142,7 @@ namespace SpiritIslandLogger.Web.ViewModel
                              .ThenInclude(gp => gp.Spirit)
                              .FirstOrDefaultAsync(g => g.Id == gameId);
 
+            PlayerCount = this.game.Players.Count;
             AdversaryLevel = this.game.AdversaryLevel;
             BlightLeft = this.game.BlightCount;
             Blighted = this.game.BlightedIsland ?? false;
@@ -94,7 +153,6 @@ namespace SpiritIslandLogger.Web.ViewModel
             Score = this.game.ManualScore;
             CardsLeft = this.game.InvaderCardsLeft;
             AdversaryId = this.game.Adversary?.Id;
-            PlayerCount = this.game.Players.Count;
 
             GamePlayers = this.game.Players.Select(vm => new GamePlayerVm
                                                          {
@@ -105,6 +163,10 @@ namespace SpiritIslandLogger.Web.ViewModel
         }
 
         private Game game = new();
+        private int? dahanRemainder;
+        private int? dahanLeft;
+        private int? blightLeft;
+        private int? blightRemainder;
 
         public async Task SaveGameAsync()
         {

@@ -59,21 +59,24 @@
         </div>
     }
 
-    <div class="form-group row">
-        <label for="DahanLeft" class="col-sm-2 col-form-label">Dahan on the island</label>
-        <div class="col-sm-10">
-            <InputNumber @bind-Value="ViewModel.DahanLeft" class="form-check-input" id="DahanLeft">
-
-            </InputNumber>
-        </div>
-        <ValidationMessage For="() => ViewModel.DahanLeft"/>
+<div class="form-group row">
+    <label for="DahanLeft" class="col-sm-2 col-form-label">Dahan on the island</label>
+    <div class="col-sm-2">
+        <InputNumber @bind-Value="ViewModel.DahanLeft" class="form-check-input" id="DahanLeft">
+        </InputNumber>
     </div>
+    <div class="col-sm-8">
+        Or <InputNumber @bind-Value="ViewModel.DahanGroups" /> groups of @ViewModel.PlayerCount Dahans plus <InputNumber @bind-Value="ViewModel.DahanRemainder" />
+    </div>
+    <ValidationMessage For="() => ViewModel.DahanLeft" />
+</div>
     <div class="form-group row">
         <label for="BlightLeft" class="col-sm-2 col-form-label">Blight on the island</label>
-        <div class="col-sm-10">
-            <InputNumber @bind-Value="ViewModel.BlightLeft" class="form-check-input" id="BlightLeft">
-
-            </InputNumber>
+        <div class="col-sm-2">
+            <InputNumber @bind-Value="ViewModel.BlightLeft" class="form-check-input" id="BlightLeft"/>
+        </div>
+        <div class="col-sm-8">
+            Or <InputNumber @bind-Value="ViewModel.BlightGroups" /> groups of @ViewModel.PlayerCount Blight plus <InputNumber @bind-Value="ViewModel.BlightRemainder" />
         </div>
         <ValidationMessage For="() => ViewModel.BlightLeft"/>
     </div>
