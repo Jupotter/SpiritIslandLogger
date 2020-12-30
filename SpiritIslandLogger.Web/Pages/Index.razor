@@ -1,7 +1,23 @@
 ﻿@page "/"
+@using SpiritIslandLogger.Web.Data
+@using Microsoft.EntityFrameworkCore
 
-<h1>Hello, world!</h1>
+<h1>Write their Words in Stone</h1>
 
-Welcome to your new app.
+@if (GameCount.HasValue)
+{
+    <div>@GameCount games recorded</div>
+}
+else
+{
+    <div>Loading statistics</div>
+}
 
-<SurveyPrompt Title="How is Blazor working for you?" />
+@inject ApplicationDbContext Context
+@code {
+    int? GameCount { get; set; }
+    protected override async Task OnInitializedAsync()
+    {
+        GameCount = await Context.Games.CountAsync();
+    }
+}
