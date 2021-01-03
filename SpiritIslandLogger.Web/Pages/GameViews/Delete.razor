@@ -1,0 +1,79 @@
+﻿@page "/game/{GameId:int}/delete/"
+
+@using SpiritIslandLogger.Web.Data
+@inject ApplicationDbContext DbContext
+@inject NavigationManager Navigation
+
+<h2>Delete</h2>
+<h3>Are you sure you want to delete this?</h3>
+
+@if (game == null)
+{
+    <p>
+        <em>Loading...</em>
+    </p>
+}
+else
+{
+    <p>
+        @game.Date.ToString("D")
+        @if (game.Adversary is not null)
+        {
+            @:, @game.Adversary.Name
+            @: Level @game.AdversaryLevel
+        }
+    </p>
+}
+
+<EditForm OnSubmit="DeleteItem" Model="GameId">
+    <input type="submit" value="Delete" class="btn btn-danger"/> |
+    <NavLink href="./">
+        <button class="btn">Cancel</button>
+    </NavLink>
+</EditForm>
+
+@code {
+#nullable enable
+
+    [Parameter]
+    public int? GameId { get; set; }
+
+    private Game? game;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await base.OnParametersSetAsync();
+
+        if (!GameId.HasValue)
+        {
+            NavigateToIndex();
+            return;
+        }
+
+        game = await DbContext.Games.FindAsync(GameId);
+        if (game is null)
+        {
+            NavigateToIndex();
+        }
+    }
+
+    private async Task DeleteItem()
+    {
+        if (game is null)
+        {
+            NavigateToIndex();
+            return;
+        }
+
+        DbContext.Games.Remove(game);
+        await DbContext.SaveChangesAsync();
+
+        NavigateToIndex();
+    }
+
+    private void NavigateToIndex()
+    {
+        Navigation.NavigateTo("/games");
+    }
+
+}
