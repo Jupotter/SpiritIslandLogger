@@ -121,9 +121,9 @@ namespace SpiritIslandLogger.Web.ViewModel
 
         public async Task InitializeAsync()
         {
-            this.KnownPlayers = await this.dbContext.Players.ToListAsync();
-            this.Adversaries = await this.dbContext.Adversaries.ToListAsync();
-            this.Spirits = await this.dbContext.Spirits.ToListAsync();
+            this.KnownPlayers = await this.dbContext.Players.OrderBy(p => p.Name).ToListAsync();
+            this.Adversaries = await this.dbContext.Adversaries.OrderBy(a => a.Name).ToListAsync();
+            this.Spirits = await this.dbContext.Spirits.OrderBy(s => s.Name).ToListAsync();
         }
 
         public async Task LoadGameAsync(int? gameId)
@@ -135,7 +135,6 @@ namespace SpiritIslandLogger.Web.ViewModel
 
             game = await this.dbContext.Games
                              .Include(g => g.Adversary)
-                             .ThenInclude(a => a.Levels)
                              .Include(g => g.Players)
                              .ThenInclude(gp => gp.Player)
                              .Include(g => g.Players)
