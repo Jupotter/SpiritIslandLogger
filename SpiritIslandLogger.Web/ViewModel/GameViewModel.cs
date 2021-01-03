@@ -10,19 +10,24 @@ namespace SpiritIslandLogger.Web.ViewModel
 {
     public class GameViewModel
     {
-        public bool Saving { get; private set; }
+        private readonly ApplicationDbContext dbContext;
+        private int? blightLeft;
+        private int? blightRemainder;
+        private int? dahanLeft;
+        private int? dahanRemainder;
 
-        public class GamePlayerVm
-        {
-            public            bool   NewPlayer     { get; set; }
-            [Required] public string NewPlayerName { get; set; } = "";
-            public            int    PlayerId      { get; set; }
-            [Required] public int    SpiritId      { get; set; }
-        }
-
-        [Required] public DateTimeOffset Date { get; set; } = DateTimeOffset.Now.Date;
+        private Game game = new();
 
         private int playerCount;
+
+        public GameViewModel(ApplicationDbContext dbContext)
+        {
+            this.dbContext = dbContext;
+        }
+
+        public bool Saving { get; private set; }
+
+        [Required] public DateTimeOffset Date { get; set; } = DateTimeOffset.Now.Date;
 
         [Range(1, 6)]
         public int PlayerCount
@@ -31,7 +36,7 @@ namespace SpiritIslandLogger.Web.ViewModel
             set
             {
                 this.playerCount = value;
-                this.GamePlayers = Enumerable.Range(0, this.playerCount).Select(_ => new GamePlayerVm()).ToList();
+                GamePlayers = Enumerable.Range(0, this.playerCount).Select(_ => new GamePlayerVm()).ToList();
             }
         }
 
@@ -67,7 +72,9 @@ namespace SpiritIslandLogger.Web.ViewModel
             {
                 this.dahanLeft = value;
                 if (this.playerCount != 0)
+                {
                     this.dahanRemainder = this.dahanLeft % this.playerCount;
+                }
             }
         }
 
@@ -97,7 +104,9 @@ namespace SpiritIslandLogger.Web.ViewModel
             {
                 this.blightLeft = value;
                 if (this.playerCount != 0)
+                {
                     this.blightRemainder = this.blightLeft % this.playerCount;
+                }
             }
         }
 
@@ -108,22 +117,17 @@ namespace SpiritIslandLogger.Web.ViewModel
 
         public List<GamePlayerVm> GamePlayers { get; set; } = new();
 
-        private readonly ApplicationDbContext dbContext;
-
         public IEnumerable<Player>    KnownPlayers { get; set; } = Array.Empty<Player>();
         public IEnumerable<Adversary> Adversaries  { get; set; } = Array.Empty<Adversary>();
         public IEnumerable<Spirit>    Spirits      { get; set; } = Array.Empty<Spirit>();
 
-        public GameViewModel(ApplicationDbContext dbContext)
-        {
-            this.dbContext = dbContext;
-        }
+        public string Comment { get; set; } = "";
 
         public async Task InitializeAsync()
         {
-            this.KnownPlayers = await this.dbContext.Players.OrderBy(p => p.Name).ToListAsync();
-            this.Adversaries = await this.dbContext.Adversaries.OrderBy(a => a.Name).ToListAsync();
-            this.Spirits = await this.dbContext.Spirits.OrderBy(s => s.Name).ToListAsync();
+            KnownPlayers = await this.dbContext.Players.OrderBy(p => p.Name).ToListAsync();
+            Adversaries = await this.dbContext.Adversaries.OrderBy(a => a.Name).ToListAsync();
+            Spirits = await this.dbContext.Spirits.OrderBy(s => s.Name).ToListAsync();
         }
 
         public async Task LoadGameAsync(int? gameId)
@@ -133,13 +137,13 @@ namespace SpiritIslandLogger.Web.ViewModel
                 return;
             }
 
-            game = await this.dbContext.Games
-                             .Include(g => g.Adversary)
-                             .Include(g => g.Players)
-                             .ThenInclude(gp => gp.Player)
-                             .Include(g => g.Players)
-                             .ThenInclude(gp => gp.Spirit)
-                             .FirstOrDefaultAsync(g => g.Id == gameId);
+            this.game = await this.dbContext.Games
+                                  .Include(g => g.Adversary)
+                                  .Include(g => g.Players)
+                                  .ThenInclude(gp => gp.Player)
+                                  .Include(g => g.Players)
+                                  .ThenInclude(gp => gp.Spirit)
+                                  .FirstOrDefaultAsync(g => g.Id == gameId);
 
             PlayerCount = this.game.Players.Count;
             AdversaryLevel = this.game.AdversaryLevel;
@@ -156,16 +160,12 @@ namespace SpiritIslandLogger.Web.ViewModel
             GamePlayers = this.game.Players.Select(vm => new GamePlayerVm
                                                          {
                                                              PlayerId = vm.Player.Id,
-                                                             SpiritId = vm.Spirit.Id
+                                                             SpiritId = vm.Spirit.Id,
                                                          })
                               .ToList();
-        }
 
-        private Game game = new();
-        private int? dahanRemainder;
-        private int? dahanLeft;
-        private int? blightLeft;
-        private int? blightRemainder;
+            Comment = this.game.Comment;
+        }
 
         public async Task SaveGameAsync()
         {
@@ -184,6 +184,7 @@ namespace SpiritIslandLogger.Web.ViewModel
                 this.game.Adversary = AdversaryId.HasValue
                                           ? await this.dbContext.Adversaries.FindAsync(AdversaryId.Value)
                                           : null;
+                this.game.Comment = Comment;
 
                 var gamePlayers = new List<GamePlayer>();
                 foreach (var gamePlayerVm in GamePlayers)
@@ -203,21 +204,34 @@ namespace SpiritIslandLogger.Web.ViewModel
                     gamePlayers.Add(new GamePlayer
                                     {
                                         Player = player,
-                                        Spirit = spirit
+                                        Spirit = spirit,
                                     });
                 }
 
-                game.Players = gamePlayers;
+                this.game.Players = gamePlayers;
                 if (this.game.Id == 0)
-                    await this.dbContext.Games.AddAsync(game);
+                {
+                    await this.dbContext.Games.AddAsync(this.game);
+                }
                 else
-                    this.dbContext.Games.Update(game);
+                {
+                    this.dbContext.Games.Update(this.game);
+                }
+
                 await this.dbContext.SaveChangesAsync();
             }
             finally
             {
                 Saving = false;
             }
+        }
+
+        public class GamePlayerVm
+        {
+            public            bool   NewPlayer     { get; set; }
+            [Required] public string NewPlayerName { get; set; } = "";
+            public            int    PlayerId      { get; set; }
+            [Required] public int    SpiritId      { get; set; }
         }
     }
 }

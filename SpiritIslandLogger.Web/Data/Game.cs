@@ -22,6 +22,8 @@ namespace SpiritIslandLogger.Web.Data
         public int?           FearLevel       { get; set; }
         public int?           InvaderCardsLeft { get; set; }
 
+        public string Comment { get; set; } = "";
+
         [NotMapped]
         public int? RealScore
         {

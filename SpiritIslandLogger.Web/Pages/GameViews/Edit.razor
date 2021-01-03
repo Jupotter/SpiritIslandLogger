@@ -11,22 +11,17 @@
 <EditForm Model="@ViewModel" OnValidSubmit="@SubmitFormAsync">
     <DataAnnotationsValidator/>
     <div class="form-group row">
-        <label for="Date" class="col-sm-2 col-form-label">Date</label>
-        <div class="col-sm-10">
+        <label for="Date" class="col-lg-2 col-form-label">Date</label>
+        <div class="col-lg-10">
             <InputDate @bind-Value="ViewModel.Date" class="form-control" id="Date"></InputDate>
             <ValidationMessage For="() => ViewModel.Date"/>
         </div>
 
     </div>
-
     <div class="form-group row">
-        <div class="form-check">
-        </div>
-    </div>
-    <div class="form-group row">
-        <label for="Adversary" class="col-sm-2 col-form-label">Adversary</label>
-        <div class="col-sm-2">
-            <InputSelect @bind-Value="ViewModel.AdversaryId" class="form-check-input" id="Adversary">
+        <label for="Adversary" class="col-lg-2 col-form-label">Adversary</label>
+        <div class="col-lg-2">
+            <InputSelect @bind-Value="ViewModel.AdversaryId" class="form-control" id="Adversary">
                 <option value="">None</option>
                 @foreach (var adversary in ViewModel.Adversaries)
                 {
@@ -37,9 +32,9 @@
 
         @if (ViewModel.AdversaryId.HasValue && ViewModel.AdversaryId != 0)
         {
-            <label for="AdversaryLvl" class="col-sm-2 col-form-label">Adversary Level</label>
-            <div class="col-sm-2">
-                <InputNumber @bind-Value="ViewModel.AdversaryLevel" class="form-check-input" id="AdversaryLvl"/>
+            <label for="AdversaryLvl" class="col-lg-2 col-form-label">Adversary Level</label>
+            <div class="col-lg-2">
+                <InputNumber @bind-Value="ViewModel.AdversaryLevel" class="form-control" id="AdversaryLvl"/>
             </div>
         }
         <ValidationMessage For="() => ViewModel.AdversaryId"/>
@@ -47,23 +42,23 @@
     </div>
 
     <div class="form-group row">
-        <label for="DahanLeft" class="col-sm-2 col-form-label">Dahan on the island</label>
-        <div class="col-sm-2">
-            <InputNumber @bind-Value="ViewModel.DahanLeft" class="form-check-input" id="DahanLeft">
+        <label for="DahanLeft" class="col-lg-2 col-form-label">Dahan on the island</label>
+        <div class="col-lg-2">
+            <InputNumber @bind-Value="ViewModel.DahanLeft" class="form-control" id="DahanLeft">
             </InputNumber>
         </div>
-        <div class="col-sm-8">
-            Or <InputNumber @bind-Value="ViewModel.DahanGroups"/> groups of @ViewModel.PlayerCount Dahans plus <InputNumber @bind-Value="ViewModel.DahanRemainder"/>
+        <div class="col-lg-8 form-inline">
+            Or <InputNumber @bind-Value="ViewModel.DahanGroups" class="form-control"/> groups of @ViewModel.PlayerCount Dahans plus <InputNumber @bind-Value="ViewModel.DahanRemainder" class="form-control"/>
         </div>
         <ValidationMessage For="() => ViewModel.DahanLeft"/>
     </div>
     <div class="form-group row">
-        <label for="BlightLeft" class="col-sm-2 col-form-label">Blight on the island</label>
-        <div class="col-sm-2">
-            <InputNumber @bind-Value="ViewModel.BlightLeft" class="form-check-input" id="BlightLeft"/>
+        <label for="BlightLeft" class="col-lg-2 col-form-label">Blight on the island</label>
+        <div class="col-lg-2">
+            <InputNumber @bind-Value="ViewModel.BlightLeft" class="form-control" id="BlightLeft"/>
         </div>
-        <div class="col-sm-8">
-            Or <InputNumber @bind-Value="ViewModel.BlightGroups"/> groups of @ViewModel.PlayerCount Blight plus <InputNumber @bind-Value="ViewModel.BlightRemainder"/>
+        <div class="col-lg-8 form-inline">
+            Or <InputNumber @bind-Value="ViewModel.BlightGroups" class="form-control"/> groups of @ViewModel.PlayerCount Blight plus <InputNumber @bind-Value="ViewModel.BlightRemainder" class="form-control"/>
         </div>
         <ValidationMessage For="() => ViewModel.BlightLeft"/>
     </div>
@@ -71,25 +66,25 @@
     </div>
     <div class="form-group row">
 
-        <label for="CardsLeft" class="col-sm-2 col-form-label">Invader Cards left</label>
-        <div class="col-sm-2">
-            <InputNumber @bind-Value="ViewModel.CardsLeft" class="form-check-input" id="CardsLeft"/>
+        <label for="CardsLeft" class="col-lg-2 col-form-label">Invader Cards left</label>
+        <div class="col-lg-2">
+            <InputNumber @bind-Value="ViewModel.CardsLeft" class="form-control" id="CardsLeft"/>
         </div>
-        <label for="FearLevel" class="col-sm-2 col-form-label">Final fear level</label>
-        <div class="col-sm-2">
-            <InputNumber @bind-Value="ViewModel.FearLevel" class="form-check-input" id="FearLevel"/>
+        <label for="FearLevel" class="col-lg-2 col-form-label">Final fear level</label>
+        <div class="col-lg-2">
+            <InputNumber @bind-Value="ViewModel.FearLevel" class="form-control" id="FearLevel"/>
         </div>
         <ValidationMessage For="() => ViewModel.CardsLeft"/>
         <ValidationMessage For="() => ViewModel.FearLevel"/>
     </div>
 
     <div class="form-group row">
-        <div class="col-sm-2"></div>
-        <div class="col-sm-2">
+        <div class="col-lg-2"></div>
+        <div class="col-lg-2">
             <InputCheckbox @bind-Value="ViewModel.Victory" class="form-check-input" id="Victory"></InputCheckbox>
             <label for="Victory" class="form-check-label">Victory</label>
         </div>
-        <div class="col-sm-2">
+        <div class="col-lg-2">
 
             <InputCheckbox @bind-Value="ViewModel.Blighted" class="form-check-input" id="Blighted"></InputCheckbox>
             <label for="Blighted" class="form-check-label">Blighted Island</label>
@@ -98,15 +93,15 @@
         <ValidationMessage For="() => ViewModel.Blighted"/>
     </div>
     <div class="form-group row">
-        <label for="Score" class="col-sm-2 col-form-label">Score (optional)</label>
-        <div class="col-sm-2">
-            <InputNumber @bind-Value="ViewModel.Score" class="form-check-input" id="Score"/>
+        <label for="Score" class="col-lg-2 col-form-label">Score (optional)</label>
+        <div class="col-lg-2">
+            <InputNumber @bind-Value="ViewModel.Score" class="form-control" id="Score"/>
         </div>
         <ValidationMessage For="() => ViewModel.Score"/>
     </div>
     <div class="form-group row">
-        <label for="PlayerCount" class="col-sm-2 col-form-label">Player Count</label>
-        <div class="col-sm-10">
+        <label for="PlayerCount" class="col-lg-2 col-form-label">Player Count</label>
+        <div class="col-lg-10">
             <InputNumber @bind-Value="ViewModel.PlayerCount" class="form-control" id="PlayerCount"/>
         </div>
         <ValidationMessage For="() => ViewModel.PlayerCount"/>
@@ -130,10 +125,10 @@
                     <td>
                         @if (player.NewPlayer)
                         {
-                            <InputText @bind-Value="player.NewPlayerName"></InputText>                        }
+                            <InputText @bind-Value="player.NewPlayerName" class="form-control"></InputText>                        }
                         else
                         {
-                            <InputSelect @bind-Value="player.PlayerId" class="form-check-input">
+                            <InputSelect @bind-Value="player.PlayerId" class="form-control">
                                 @foreach (var knownPlayer in ViewModel.KnownPlayers)
                                 {
                                     <option value="@knownPlayer.Id">@knownPlayer.Name</option>
@@ -141,7 +136,7 @@
                             </InputSelect>                        }
                     </td>
                     <td>
-                        <InputSelect @bind-Value="player.SpiritId" class="form-check-input">
+                        <InputSelect @bind-Value="player.SpiritId" class="form-control">
                             @foreach (var spirit in ViewModel.Spirits)
                             {
                                 <option value="@spirit.Id">@spirit.Name</option>
@@ -152,6 +147,12 @@
             }
             </tbody>
         </table>
+    </div>
+
+    <div class="form-group row">
+        <label for="comment" class="col-lg-2 col-form-label">Comment</label>
+        <InputTextArea id="comment" @bind-Value="ViewModel.Comment"  class="form-control"></InputTextArea>
+        <ValidationMessage For="() => ViewModel.Comment"/>
     </div>
 
     <input type="submit" value="Submit" class="btn btn-primary"/>
