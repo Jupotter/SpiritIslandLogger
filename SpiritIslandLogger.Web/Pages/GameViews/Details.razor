@@ -5,7 +5,6 @@
 @inject ApplicationDbContext DbContext
 @inject NavigationManager Navigation
 
-<h3>Game</h3>
 @if (game == null)
 {
     <p>
@@ -14,33 +13,81 @@
 }
 else
 {
-    <dl class="dl-horizontal">
-        <dt>
-            Date
-        </dt>
-        <dd>
-            @game.Date.ToString("D")
-        </dd>
-        <dt>
-            Victory
-        </dt>
-        <dd>
-            @game.Victory
-        </dd>
-        <dt>
-            Blighted Island
-        </dt>
-        <dd>
-            @game.BlightedIsland
-        </dd>
+    <h3>
+        @game.Date.ToString("D")
+        @if (game.Adversary is not null)
+        {
+            @:, @game.Adversary.Name
+            @: Level @game.AdversaryLevel
+        }
+    </h3>
+    
+    {
+        string color = "p-1";
+        string text = "";
+        string icon = "";
+        @if (game.Victory)
+        {
+            text += "Victory";
+            icon = "oi oi-check";
+        }
+        else
+        {
+            text += "Defeat";
+            color += "";
+            icon = "oi oi-x";
+        }
+        @if (game.BlightedIsland.HasValue)
+        {
+            if (game.BlightedIsland.Value)
+            {
+                color += " bg-secondary";
+                text += " (blighted island)";
+            }
+            else
+            {
+                color += " text-white bg-success";
+                text += " (healthy island)";
+            }
+        }
 
-        <dt>
-            Score
-        </dt>
-        <dd>
-            @game.RealScore
-        </dd>
-    </dl>
+        <div class="@color">
+            <span class="@icon"></span>
+            @text
+        </div>
+    }
+<ul class="list-unstyled">
+    @if (game.RealScore.HasValue)
+    {
+        <li>Score: @game.RealScore</li>
+    }
+    @if (game.DahanLeft.HasValue)
+    {
+        <li>@game.DahanLeft Dahans on the island</li>
+    }
+
+    @if (game.BlightCount.HasValue)
+    {
+        <li>@game.BlightCount Blights left on the island</li>
+    }
+
+
+    @if (game.InvaderCardsLeft.HasValue)
+    {
+        <li>@game.InvaderCardsLeft turns left</li>
+    }
+
+    @if (game.FearLevel.HasValue)
+    {
+        <li>Terror level @game.FearLevel reached</li>
+    }
+    </ul>
+    @if (!string.IsNullOrWhiteSpace(game.Comment))
+    {
+        <blockquote class="blockquote">
+            <p>@game.Comment</p>
+        </blockquote>
+    }
     <div>
         <table id="players" class="table">
             <thead>
@@ -85,7 +132,7 @@ else
 
     private Uri? deleteUri;
     private Uri? editUri;
-    
+
     protected override async Task OnParametersSetAsync()
     {
         await base.OnParametersSetAsync();
