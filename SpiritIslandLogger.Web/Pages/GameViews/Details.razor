@@ -25,7 +25,7 @@ else
     {
         string color = "p-1";
         string text = "";
-        string icon = "";
+        string icon;
         @if (game.Victory)
         {
             text += "Victory";
@@ -101,11 +101,11 @@ else
             </tr>
             </thead>
             <tbody>
-            @foreach (var player in game.Players)
+            @foreach (var player in (game.Players ?? Enumerable.Empty<GamePlayer>()))
             {
                 <tr>
-                    <td>@player.Player.Name</td>
-                    <td>@player.Spirit.Name</td>
+                    <td>@player.Player?.Name</td>
+                    <td>@player.Spirit?.Name</td>
                 </tr>
             }
             </tbody>

@@ -9,7 +9,7 @@ namespace SpiritIslandLogger.Web.Data
     {
         public int Id { get; set; }
 
-        public IList<GamePlayer> Players { get; set; } = new List<GamePlayer>();
+        public IList<GamePlayer>? Players { get; set; } = new List<GamePlayer>();
 
         public DateTimeOffset Date            { get; set; }
         public bool           Victory         { get; set; }
@@ -30,7 +30,7 @@ namespace SpiritIslandLogger.Web.Data
             get
             {
                 if (ManualScore.HasValue)return ManualScore ;
-                if (Players.Count > 0 &&
+                if (Players?.Count > 0 &&
                     DahanLeft.HasValue      &&
                     BlightCount.HasValue    &&
                     BlightedIsland.HasValue &&

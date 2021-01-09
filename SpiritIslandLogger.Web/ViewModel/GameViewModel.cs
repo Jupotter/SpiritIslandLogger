@@ -50,7 +50,7 @@ namespace SpiritIslandLogger.Web.ViewModel
         public int? DahanGroups
         {
             get => PlayerCount > 0 ? DahanLeft / PlayerCount : null;
-            set => DahanLeft = value * PlayerCount + DahanRemainder;
+            set => DahanLeft = value * PlayerCount + (DahanRemainder ?? 0);
         }
 
         [Range(0, int.MaxValue)]
@@ -60,7 +60,7 @@ namespace SpiritIslandLogger.Web.ViewModel
             set
             {
                 this.dahanRemainder = value;
-                DahanLeft = DahanGroups * PlayerCount + DahanRemainder;
+                DahanLeft = (DahanGroups ?? 0) * PlayerCount + DahanRemainder;
             }
         }
 
@@ -82,7 +82,7 @@ namespace SpiritIslandLogger.Web.ViewModel
         public int? BlightGroups
         {
             get => PlayerCount > 0 ? BlightLeft / PlayerCount : null;
-            set => BlightLeft = value * PlayerCount + BlightRemainder;
+            set => BlightLeft = value * PlayerCount + (BlightRemainder ?? 0);
         }
 
         [Range(0, int.MaxValue)]
@@ -92,7 +92,7 @@ namespace SpiritIslandLogger.Web.ViewModel
             set
             {
                 this.blightRemainder = value;
-                BlightLeft = BlightGroups * PlayerCount + BlightRemainder;
+                BlightLeft = (BlightGroups ?? 0) * PlayerCount + BlightRemainder;
             }
         }
 
@@ -144,8 +144,8 @@ namespace SpiritIslandLogger.Web.ViewModel
                                   .Include(g => g.Players)
                                   .ThenInclude(gp => gp.Spirit)
                                   .FirstOrDefaultAsync(g => g.Id == gameId);
-
-            PlayerCount = this.game.Players.Count;
+            
+            PlayerCount = this.game.Players?.Count ?? 0;
             AdversaryLevel = this.game.AdversaryLevel;
             BlightLeft = this.game.BlightCount;
             Blighted = this.game.BlightedIsland ?? false;
@@ -157,12 +157,12 @@ namespace SpiritIslandLogger.Web.ViewModel
             CardsLeft = this.game.InvaderCardsLeft;
             AdversaryId = this.game.Adversary?.Id;
 
-            GamePlayers = this.game.Players.Select(vm => new GamePlayerVm
+            GamePlayers = this.game.Players?.Select(vm => new GamePlayerVm
                                                          {
-                                                             PlayerId = vm.Player.Id,
-                                                             SpiritId = vm.Spirit.Id,
+                                                             PlayerId = vm.Player?.Id ?? 0,
+                                                             SpiritId = vm.Spirit?.Id ?? 0,
                                                          })
-                              .ToList();
+                              .ToList() ?? new();
 
             Comment = this.game.Comment;
         }
@@ -189,7 +189,7 @@ namespace SpiritIslandLogger.Web.ViewModel
                 var gamePlayers = new List<GamePlayer>();
                 foreach (var gamePlayerVm in GamePlayers)
                 {
-                    Player player;
+                    Player? player;
                     if (gamePlayerVm.NewPlayer)
                     {
                         player = new Player { Name = gamePlayerVm.NewPlayerName };
@@ -198,9 +198,13 @@ namespace SpiritIslandLogger.Web.ViewModel
                     else
                     {
                         player = await this.dbContext.Players.FindAsync(gamePlayerVm.PlayerId);
+                        if (player == null)
+                            continue;
                     }
 
                     var spirit = await this.dbContext.Spirits.FindAsync(gamePlayerVm.SpiritId);
+                    if (spirit == null)
+                        continue;
                     gamePlayers.Add(new GamePlayer
                                     {
                                         Player = player,
