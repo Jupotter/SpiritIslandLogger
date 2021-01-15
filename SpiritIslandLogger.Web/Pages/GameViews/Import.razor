@@ -1,0 +1,209 @@
+﻿@page "/game/import"
+@page "/games/import"
+@using System.IO
+
+@using SpiritIslandLogger.Web.Data
+@using Microsoft.EntityFrameworkCore
+@inject ApplicationDbContext Context
+@inject ApplicationDbContext SubmitContext
+@inject NavigationManager Navigation
+
+<h3>Import Games</h3>
+
+<div>
+    <label for="gameListFile">Game List</label>
+    <InputFile id="gameListFile" OnChange="OnGameListChanged"></InputFile>
+</div>
+
+<div>
+    <label for="playerListFile">Players List</label>
+    <InputFile id="playerListFile" OnChange="OnPlayerListChanged"></InputFile>
+</div>
+
+@if (loading)
+{
+    <p>loading...</p>
+}
+else
+{
+    <p>@fileGames.Count games to load</p>
+    <p>@filePlayers.Count players in games</p>
+    <div class="row">
+        <div class="col">
+            Players to create
+            <ul>
+                @foreach (var p in PlayersToCreate)
+                {
+                    <li>@p</li>
+                }
+            </ul>
+        </div>
+        <div class="col">
+            Unknown Spirit
+            <ul>
+                @foreach (var p in UnknownSpirits)
+                {
+                    <li>@p</li>
+                }
+            </ul>
+        </div>
+        <div class="col">
+            Unknown Adversary
+            <ul>
+                @foreach (var p in UnknownAdversary)
+                {
+                    <li>@p</li>
+                }
+            </ul>
+        </div>
+    </div>
+}
+
+<p class="text-danger">@exceptionMessage</p>
+
+<button @onclick="Submit" class="btn btn-primary" disabled="@Invalid">Submit</button>
+
+@code {
+#nullable enable
+
+    private bool loading = true;
+    private string exceptionMessage = "";
+
+    private record ImportGameModel(int Id, DateTime Date, int PlayerCount, bool Victory, string Adversary, int? Level, string Scenario, int? FearLevel, bool Blighted, int? Points);
+
+    private record ImportedPlayerModel(int GameId, string Player, string Spirit);
+
+    private readonly List<ImportGameModel> fileGames = new();
+    private readonly List<ImportedPlayerModel> filePlayers = new();
+
+    public IEnumerable<string> PlayersToCreate { get; }
+    public IEnumerable<string> UnknownSpirits { get; }
+    public IEnumerable<string> UnknownAdversary { get; }
+
+    public bool Invalid => UnknownSpirits.Any() || UnknownAdversary.Any();
+
+    public Import()
+    {
+        PlayersToCreate = filePlayers.Select(p => p.Player)
+                                 .Distinct()
+                                 .Where(n => !Context.Players.Any(p => p.Name == n));
+        UnknownSpirits = filePlayers.Select(p => p.Spirit)
+                                .Distinct()
+                                .Where(n => !string.IsNullOrWhiteSpace(n) && !Context.Spirits.Any(p => p.Name == n));
+
+        UnknownAdversary = fileGames.Select(p => p.Adversary)
+                                .Distinct()
+                                .Where(n => !string.IsNullOrWhiteSpace(n) && !Context.Adversaries.Any(p => p.Name == n));
+    }
+
+
+    private async Task OnGameListChanged(InputFileChangeEventArgs e)
+    {
+        fileGames.Clear();
+
+        loading = true;
+        using var s = new StreamReader(e.File.OpenReadStream());
+        while (true)
+        {
+            var line = await s.ReadLineAsync();
+            if (line == null)
+                break;
+            var split = line.Split(',');
+
+            if (split.Length != 11)
+                continue;
+
+            if (!int.TryParse(split[0], out var id))
+            {
+                continue;
+            }
+
+            try
+            {
+                var game = new ImportGameModel(id, DateTime.Parse(split[1]),
+                    int.Parse(split[2]),
+                    split[3].Equals("Y", StringComparison.InvariantCultureIgnoreCase),
+                    split[4],
+                    string.IsNullOrWhiteSpace(split[5]) ? null : int.Parse(split[5]),
+                    split[6],
+                    string.IsNullOrWhiteSpace(split[8]) ? null : int.Parse(split[8]),
+                    split[9].Equals("Y", StringComparison.InvariantCultureIgnoreCase),
+                    string.IsNullOrWhiteSpace(split[10]) ? null : int.Parse(split[10]));
+                fileGames.Add(game);
+            }
+            catch (FormatException ex)
+            {
+                exceptionMessage += $"{ex.Message}\n";
+            }
+        }
+        loading = false;
+    }
+
+    private async Task OnPlayerListChanged(InputFileChangeEventArgs e)
+    {
+        loading = true;
+        filePlayers.Clear();
+
+        using var s = new StreamReader(e.File.OpenReadStream());
+        while (true)
+        {
+            var line = await s.ReadLineAsync();
+            if (line == null)
+                break;
+            var split = line.Split(',');
+
+            if (split.Length != 3)
+                continue;
+
+
+            if (!int.TryParse(split[0], out var id))
+            {
+                continue;
+            }
+
+            var player = new ImportedPlayerModel(id, split[1], split[2]);
+            filePlayers.Add(player);
+        }
+
+        loading = false;
+    }
+
+    private async Task Submit()
+    {
+        var players = from iPlayer in filePlayers
+                      join spirit in SubmitContext.Spirits on iPlayer.Spirit equals spirit.Name into spiritGj
+                      from spirit in spiritGj.DefaultIfEmpty()
+                      join player in SubmitContext.Players on iPlayer.Player equals player.Name into playerGj
+                      from player in playerGj.DefaultIfEmpty()
+                      select new { gameId = iPlayer.GameId, spirit, player, playerName = iPlayer.Player };
+
+        players = players.ToList();
+
+        var games = from game in fileGames
+                    join player in players on game.Id equals player.gameId into gamePlayers
+                    join adversary in SubmitContext.Adversaries on game.Adversary equals adversary.Name into adversaryGj
+                    from adversary in adversaryGj.DefaultIfEmpty()
+                    where game.PlayerCount == gamePlayers.Count()
+                    select new Game
+                    {
+                        Adversary = adversary,
+                        AdversaryLevel = game.Level,
+                        Comment = game.Scenario + "\nImported",
+                        Date = game.Date,
+                        BlightedIsland = game.Blighted,
+                        Victory = game.Victory,
+                        FearLevel = game.FearLevel,
+                        ManualScore = game.Points,
+                        Players = gamePlayers.Select(gp => new GamePlayer { Player = gp.player ?? new Player {Name = gp.playerName}, Spirit = gp.spirit }).ToList()
+                    };
+        games = games.ToList();
+        filePlayers.Clear();
+        fileGames.Clear();
+
+        await SubmitContext.Games.AddRangeAsync(games);
+
+        await SubmitContext.SaveChangesAsync();
+
+        Navigation.NavigateTo("/games");
+    }
+}

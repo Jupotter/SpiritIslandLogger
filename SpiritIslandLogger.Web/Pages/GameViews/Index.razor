@@ -96,11 +96,14 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        games = await Context.Games
-                             .Include(g => g.Players)
-                             .Include(g => g.Adversary)
-                             .ThenInclude(a => a.Levels)
-                             .ToListAsync();
+        var gameQuery = Context.Games
+                                       .Include(g => g.Players)
+                                       .Include(g => g.Adversary)
+                                       .ThenInclude(a => a.Levels)
+                                       .OrderByDescending(g => g.Date);
+        
+        games = await gameQuery
+                         .ToListAsync();
     }
 
 }
