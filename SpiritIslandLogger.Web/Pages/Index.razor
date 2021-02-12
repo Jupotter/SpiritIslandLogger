@@ -1,43 +1,78 @@
 ﻿@page "/"
 @using SpiritIslandLogger.Web.Data
 @using Microsoft.EntityFrameworkCore
+@using Microsoft.EntityFrameworkCore.Metadata.Internal
+@using System.Diagnostics
 
 <h1>Write their Words in Stone</h1>
 
-@if (Adversaries != null)
+@if (loaded)
 {
     <div>@GameCount games recorded</div>
-    <table class="table">
-        <thead>
-        <tr>
-            <th class="col-1"></th>
-            @foreach (var adversary in Adversaries.OrderBy(a => a.Name))
-            {
-                <th scope="col" class="col-1">@adversary.Name</th>
-            }
-        </tr>
-        </thead>
-        <tbody>
-        @for (int level = 0; level < 7; level++)
-        {
+    <div class="row">
+        <table class="table col-lg-12">
+            <thead>
             <tr>
-                <th scope="row">Level @level</th>
-                @foreach (var adversaryId in Adversaries.OrderBy(a => a.Name).Select(a => a.Id))
+                <th class="col-1"></th>
+                @foreach (var adversary in Adversaries.OrderBy(a => a.Name))
                 {
-                    var value = GamesByAdversaryLevel?.Find(g => g.AdversaryId == adversaryId && g.AdversaryLevel == level);
-                    @if (value != null)
-                    {
-                        <td>@value.WinCount/@value.Count</td>
-                    }
-                    else
-                    {
-                        <td>-</td>
-                    }
+                    <th scope="col" class="col-1">@adversary.Name</th>
                 }
             </tr>
-        }
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+            @for (int level = 0; level < 7; level++)
+            {
+                <tr>
+                    <th scope="row">Level @level</th>
+                    @foreach (var adversaryId in Adversaries.OrderBy(a => a.Name).Select(a => a.Id))
+                    {
+                        var value = GamesByAdversaryLevel?.Find(g => g.AdversaryId == adversaryId && g.AdversaryLevel == level);
+                        @if (value != null)
+                        {
+                            <td>@value.WinCount/@value.Count</td>
+                        }
+                        else
+                        {
+                            <td>-</td>
+                        }
+                    }
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+    <div class="row">
+        <div class="col-lg-6">
+            <ApexChart TItem="GamesStats" Title="Wins by difficulty" ChartType="ChartType.Line" XAxisType="XaxisType.Category"
+                       Options="chart1Options">
+                <ApexSeries TItem="GamesStats"
+                            Items="GamesByAdversaryLevel"
+                            Name="Win Percent"
+                            XValue="@(e => e.Difficulty)"
+                            YAggregate="@(e => Math.Floor(e.Sum(g => g.WinCount) * 100 / ((decimal)e.Sum(g => g.Count))))"
+                            OrderBy="@(e => e.X)"/>
+                <ApexSeries TItem="GamesStats"
+                            Items="GamesByAdversaryLevel"
+                            Name="Win Count"
+                            XValue="@(e => e.Difficulty)"
+                            YAggregate="@(e => Math.Floor((decimal)(e.Sum(g => g.WinCount))))"
+                            OrderBy="@(e => e.X)"/>
+
+            </ApexChart>
+        </div>
+        <div class="col-lg-6">
+            <ApexChart TItem="GamesStats" Title="Average Score by difficulty" ChartType="ChartType.Line" XAxisType="XaxisType.Category"
+                       Options="chart2Options">
+                <ApexSeries TItem="GamesStats"
+                            Items="GamesByAdversaryLevel"
+                            Name="Mean Score"
+                            XValue="@(e => e.Difficulty)"
+                            YAggregate="@(e => Math.Floor(e.Sum(g => g.MeanScore * g.Count) / e.Sum(g => g.Count)))"
+                            OrderBy="@(e => e.X)"/>
+            </ApexChart>
+        </div>
+    </div>
 }
 else
 {
@@ -49,7 +84,44 @@ else
 @code {
 #nullable enable
 
-    int? GameCount => GamesByAdversaryLevel?.Sum(g => g.Count) ?? 0;
+    bool loaded = false;
+
+    int? GameCount =>
+        GamesByAdversaryLevel?.Sum(g => g.Count) ?? 0;
+
+    ApexChartOptions<GamesStats> chart1Options = new()
+                                                 {
+                                                     Yaxis = new List<YAxis>
+                                                             {
+                                                                 new()
+                                                                 {
+                                                                     SeriesName = "Win Percent",
+                                                                     Opposite = true,
+                                                                     AxisTicks = new()
+                                                                                 {
+                                                                                     Show = true,
+                                                                                 },
+                                                                     Min = 0,
+                                                                     Max = 100
+                                                                 },
+                                                                 new()
+                                                                 {
+                                                                     SeriesName = "Win Count",
+                                                                     Min = 0,
+                                                                 },
+                                                             }
+                                                 };
+
+    ApexChartOptions<GamesStats> chart2Options = new ApexChartOptions<GamesStats>
+                                                 {
+                                                     Yaxis = new List<YAxis>
+                                                             {
+                                                                 new()
+                                                                 {
+                                                                     Min = 0
+                                                                 }
+                                                             }
+                                                 };
 
     protected override async Task OnInitializedAsync()
     {
@@ -72,12 +144,14 @@ else
                                };
 
         var result = await queryable.ToListAsync();
-        GamesByAdversaryLevel = result.Select(g => new GamesStats(g.Difficulty, g.AdversaryId.Value, g.AdversaryLevel ?? 0, g.Count, g.WinCount, g.MeanScore ?? 0)).ToList();
+        GamesByAdversaryLevel = result.Select(g => new GamesStats(g.Difficulty, g.AdversaryId.Value, g.AdversaryLevel ?? 0, g.Count, g.WinCount, (decimal?)g.MeanScore ?? 0)).ToList();
 
         Adversaries = await Context.Adversaries.ToListAsync();
+
+        loaded = true;
     }
 
-    private record GamesStats(int Difficulty, int AdversaryId, int AdversaryLevel, int Count, int WinCount, double MeanScore);
+    private record GamesStats(int Difficulty, int AdversaryId, int AdversaryLevel, int Count, int WinCount, decimal MeanScore);
 
 
     List<GamesStats>? GamesByAdversaryLevel { get; set; }
