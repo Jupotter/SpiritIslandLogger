@@ -16,7 +16,8 @@ namespace SpiritIslandLogger.Web.Data
     {
         public int Id { get; set; }
 
-        [Required] public Adversary Adversary { get; set; } = null!;
+        [Required] public Adversary Adversary   { get; set; } = null!;
+        [Required] public int       AdversaryId { get; set; }
 
         [Required] public int Level { get; set; }
 

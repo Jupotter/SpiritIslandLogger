@@ -22,7 +22,7 @@
             "ASPNETCORE_ENVIRONMENT": "Development"
         },
         "dotnetRunMessages": "true",
-        "applicationUrl": "https://0.0.0.0:5001;http://0.0.0.0:5000"
+        "applicationUrl": "https://artemis:5001;http://artemis:5000"
     },
     "Docker": {
       "commandName": "Docker",
