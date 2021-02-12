@@ -80,7 +80,7 @@ else
 
                     <td>
                         <NavLink href="@link">
-                            @game.RealScore
+                            @game.Score
                         </NavLink>
                     </td>
                 }
@@ -89,6 +89,8 @@ else
         </tbody>
     </table>
 }
+
+<button @onclick="RecalculateScores">Recalculate Scores</button>
 
 @code {
 #nullable enable
@@ -101,9 +103,60 @@ else
                                        .Include(g => g.Adversary)
                                        .ThenInclude(a => a.Levels)
                                        .OrderByDescending(g => g.Date);
-        
+
         games = await gameQuery
                          .ToListAsync();
     }
 
+
+    private async Task RecalculateScores()
+    {
+        var games = Context.Games
+                           .Include(g => g.Players)
+                           .Include(g => g.Adversary)
+                           .ThenInclude(a => a.Levels)
+                           .Where(g => !g.Score.HasValue);
+
+        foreach (var game in games)
+        {
+            game.Score = GetScore(game);
+        }
+        await Context.SaveChangesAsync();
+    }
+
+    private int? GetScore(Game game)
+    {
+        if (game.ManualScore.HasValue)
+            return game.ManualScore;
+        if (game.Players?.Count > 0      &&
+            game.DahanLeft.HasValue      &&
+            game.BlightCount.HasValue    &&
+            game.BlightedIsland.HasValue &&
+            game.InvaderCardsLeft.HasValue)
+        {
+            var score = game.DahanLeft / game.Players.Count - game.BlightCount / game.Players.Count;
+
+            int difficulty = 0;
+            int deckSize   = 12;
+            if (game.Adversary != null && game.AdversaryLevel.HasValue && game.Adversary.Levels != null)
+            {
+                var level = game.Adversary.Levels.First(l => l.Level == game.AdversaryLevel.Value);
+                difficulty = level.Difficulty;
+                deckSize   = level.DeckSize;
+            }
+
+            if (game.Victory)
+            {
+                score += 5 * difficulty + 10 + 2 * game.InvaderCardsLeft;
+            }
+            else
+            {
+                score += 2 * difficulty + 2 * (deckSize - game.InvaderCardsLeft);
+            }
+
+            return score;
+        }
+
+        return null;
+    }
 }

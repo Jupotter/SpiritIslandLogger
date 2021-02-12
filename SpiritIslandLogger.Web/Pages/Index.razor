@@ -4,14 +4,14 @@
 
 <h1>Write their Words in Stone</h1>
 
-@if (adversaries != null)
+@if (Adversaries != null)
 {
     <div>@GameCount games recorded</div>
     <table class="table">
         <thead>
         <tr>
             <th class="col-1"></th>
-            @foreach (var adversary in adversaries.OrderBy(a => a.Name))
+            @foreach (var adversary in Adversaries.OrderBy(a => a.Name))
             {
                 <th scope="col" class="col-1">@adversary.Name</th>
             }
@@ -22,7 +22,7 @@
         {
             <tr>
                 <th scope="row">Level @level</th>
-                @foreach (var adversaryId in adversaries.OrderBy(a => a.Name).Select(a => a.Id))
+                @foreach (var adversaryId in Adversaries.OrderBy(a => a.Name).Select(a => a.Id))
                 {
                     var value = GamesByAdversaryLevel?.Find(g => g.AdversaryId == adversaryId && g.AdversaryLevel == level);
                     @if (value != null)
@@ -47,36 +47,39 @@ else
 @inject ApplicationDbContext Context
 
 @code {
+#nullable enable
+
     int? GameCount => GamesByAdversaryLevel?.Sum(g => g.Count) ?? 0;
 
     protected override async Task OnInitializedAsync()
     {
         var queryable = from game in Context.Games.Where(g => g.AdversaryId.HasValue)
                         join adversaryLevel in Context.AdversaryLevels
-                                on new { game.AdversaryId, Level = game.AdversaryLevel }
-                                equals new { AdversaryId = (int?)adversaryLevel.AdversaryId, Level = (int?)adversaryLevel.Level }
-                                into gamesGj
+                            on new { game.AdversaryId, Level = game.AdversaryLevel }
+                            equals new { AdversaryId = (int?)adversaryLevel.AdversaryId, Level = (int?)adversaryLevel.Level }
+                            into gamesGj
                         from adversaryLevel in gamesGj.DefaultIfEmpty()
                         group game by new { adversaryLevel.Difficulty, game.AdversaryId, game.AdversaryLevel }
-                    into grouping
+                        into grouping
                         select new
-                        {
-                            grouping.Key.Difficulty,
-                            grouping.Key.AdversaryId,
-                            grouping.Key.AdversaryLevel,
-                            Count = grouping.Count(),
-                            WinCount = grouping.Count(g => g.Victory)
-                        };
+                               {
+                                   grouping.Key.Difficulty,
+                                   grouping.Key.AdversaryId,
+                                   grouping.Key.AdversaryLevel,
+                                   Count = grouping.Count(),
+                                   WinCount = grouping.Count(g => g.Victory),
+                                   MeanScore = grouping.Average(g => g.Score)
+                               };
 
         var result = await queryable.ToListAsync();
-        GamesByAdversaryLevel = result.Select(g => new GamesStats(g.Difficulty, g.AdversaryId.Value, g.AdversaryLevel ?? 0, g.Count, g.WinCount)).ToList();
+        GamesByAdversaryLevel = result.Select(g => new GamesStats(g.Difficulty, g.AdversaryId.Value, g.AdversaryLevel ?? 0, g.Count, g.WinCount, g.MeanScore ?? 0)).ToList();
 
-        adversaries = await Context.Adversaries.ToListAsync();
+        Adversaries = await Context.Adversaries.ToListAsync();
     }
 
-    private record GamesStats(int Difficulty, int AdversaryId, int AdversaryLevel, int Count, int WinCount);
+    private record GamesStats(int Difficulty, int AdversaryId, int AdversaryLevel, int Count, int WinCount, double MeanScore);
 
 
     List<GamesStats>? GamesByAdversaryLevel { get; set; }
-    List<Adversary>? adversaries { get; set; }
+    List<Adversary>? Adversaries { get; set; }
 }
