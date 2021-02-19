@@ -5,12 +5,15 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using SpiritIslandLogger.Web.Data;
+using SpiritIslandLogger.Web.Service;
 
 namespace SpiritIslandLogger.Web.ViewModel
 {
     public class GameViewModel
     {
         private readonly ApplicationDbContext dbContext;
+        private readonly ScoreService         scoreService;
+
         private int? blightLeft;
         private int? blightRemainder;
         private int? dahanLeft;
@@ -20,9 +23,10 @@ namespace SpiritIslandLogger.Web.ViewModel
 
         private int playerCount;
 
-        public GameViewModel(ApplicationDbContext dbContext)
+        public GameViewModel(ApplicationDbContext dbContext, ScoreService scoreService)
         {
-            this.dbContext = dbContext;
+            this.dbContext    = dbContext;
+            this.scoreService = scoreService;
         }
 
         public bool Saving { get; private set; }
@@ -36,7 +40,7 @@ namespace SpiritIslandLogger.Web.ViewModel
             set
             {
                 this.playerCount = value;
-                GamePlayers = Enumerable.Range(0, this.playerCount).Select(_ => new GamePlayerVm()).ToList();
+                GamePlayers      = Enumerable.Range(0, this.playerCount).Select(_ => new GamePlayerVm()).ToList();
             }
         }
 
@@ -60,7 +64,7 @@ namespace SpiritIslandLogger.Web.ViewModel
             set
             {
                 this.dahanRemainder = value;
-                DahanLeft = (DahanGroups ?? 0) * PlayerCount + DahanRemainder;
+                DahanLeft           = (DahanGroups ?? 0) * PlayerCount + DahanRemainder;
             }
         }
 
@@ -92,7 +96,7 @@ namespace SpiritIslandLogger.Web.ViewModel
             set
             {
                 this.blightRemainder = value;
-                BlightLeft = (BlightGroups ?? 0) * PlayerCount + BlightRemainder;
+                BlightLeft           = (BlightGroups ?? 0) * PlayerCount + BlightRemainder;
             }
         }
 
@@ -126,8 +130,8 @@ namespace SpiritIslandLogger.Web.ViewModel
         public async Task InitializeAsync()
         {
             KnownPlayers = await this.dbContext.Players.OrderBy(p => p.Name).ToListAsync();
-            Adversaries = await this.dbContext.Adversaries.OrderBy(a => a.Name).ToListAsync();
-            Spirits = await this.dbContext.Spirits.OrderBy(s => s.Name).ToListAsync();
+            Adversaries  = await this.dbContext.Adversaries.OrderBy(a => a.Name).ToListAsync();
+            Spirits      = await this.dbContext.Spirits.OrderBy(s => s.Name).ToListAsync();
         }
 
         public async Task LoadGameAsync(int? gameId)
@@ -144,25 +148,26 @@ namespace SpiritIslandLogger.Web.ViewModel
                                   .Include(g => g.Players)
                                   .ThenInclude(gp => gp.Spirit)
                                   .FirstOrDefaultAsync(g => g.Id == gameId);
-            
-            PlayerCount = this.game.Players?.Count ?? 0;
+
+            PlayerCount    = this.game.Players?.Count ?? 0;
             AdversaryLevel = this.game.AdversaryLevel;
-            BlightLeft = this.game.BlightCount;
-            Blighted = this.game.BlightedIsland ?? false;
-            DahanLeft = this.game.DahanLeft;
-            Date = this.game.Date;
-            Victory = this.game.Victory;
-            FearLevel = this.game.FearLevel;
-            Score = this.game.ManualScore;
-            CardsLeft = this.game.InvaderCardsLeft;
-            AdversaryId = this.game.Adversary?.Id;
+            BlightLeft     = this.game.BlightCount;
+            Blighted       = this.game.BlightedIsland ?? false;
+            DahanLeft      = this.game.DahanLeft;
+            Date           = this.game.Date;
+            Victory        = this.game.Victory;
+            FearLevel      = this.game.FearLevel;
+            Score          = this.game.ManualScore;
+            CardsLeft      = this.game.InvaderCardsLeft;
+            AdversaryId    = this.game.Adversary?.Id;
 
             GamePlayers = this.game.Players?.Select(vm => new GamePlayerVm
-                                                         {
-                                                             PlayerId = vm.Player?.Id ?? 0,
-                                                             SpiritId = vm.Spirit?.Id ?? 0,
-                                                         })
-                              .ToList() ?? new();
+                                                          {
+                                                              PlayerId = vm.Player?.Id ?? 0,
+                                                              SpiritId = vm.Spirit?.Id ?? 0,
+                                                          })
+                              .ToList() ??
+                          new();
 
             Comment = this.game.Comment;
         }
@@ -172,14 +177,14 @@ namespace SpiritIslandLogger.Web.ViewModel
             Saving = true;
             try
             {
-                this.game.AdversaryLevel = AdversaryLevel;
-                this.game.BlightCount = BlightLeft;
-                this.game.BlightedIsland = Blighted;
-                this.game.DahanLeft = DahanLeft;
-                this.game.Date = Date;
-                this.game.Victory = Victory;
-                this.game.FearLevel = FearLevel;
-                this.game.ManualScore = Score;
+                this.game.AdversaryLevel   = AdversaryLevel;
+                this.game.BlightCount      = BlightLeft;
+                this.game.BlightedIsland   = Blighted;
+                this.game.DahanLeft        = DahanLeft;
+                this.game.Date             = Date;
+                this.game.Victory          = Victory;
+                this.game.FearLevel        = FearLevel;
+                this.game.ManualScore      = Score;
                 this.game.InvaderCardsLeft = CardsLeft;
                 this.game.Adversary = AdversaryId.HasValue
                                           ? await this.dbContext.Adversaries.FindAsync(AdversaryId.Value)
@@ -213,6 +218,9 @@ namespace SpiritIslandLogger.Web.ViewModel
                 }
 
                 this.game.Players = gamePlayers;
+
+                game.Score = await scoreService.GetScore(this.game);
+                
                 if (this.game.Id == 0)
                 {
                     await this.dbContext.Games.AddAsync(this.game);

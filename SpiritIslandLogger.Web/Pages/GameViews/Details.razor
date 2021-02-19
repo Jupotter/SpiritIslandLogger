@@ -150,6 +150,7 @@ else
                               .ThenInclude(gp => gp.Player)
                               .Include(g => g.Players)
                               .ThenInclude(gp => gp.Spirit)
+                              .AsSingleQuery()
                               .FirstOrDefaultAsync(g => g.Id == GameId);
         if (game is null)
         {

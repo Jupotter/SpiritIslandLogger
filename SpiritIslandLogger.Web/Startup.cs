@@ -15,7 +15,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using SpiritIslandLogger.Web.Areas.Identity.Data;
+using SpiritIslandLogger.Web.Service;
 using SpiritIslandLogger.Web.ViewModel;
 
 namespace SpiritIslandLogger.Web
@@ -34,13 +36,17 @@ namespace SpiritIslandLogger.Web
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddDbContext<ApplicationDbContext>(options =>
+            {
                 options.UseSqlServer(
-                    Configuration.GetConnectionString("DefaultConnection")));
+                    Configuration.GetConnectionString("DefaultConnection"));
+                options.ConfigureWarnings(w => w.Throw(RelationalEventId.MultipleCollectionIncludeWarning));
+            });
             services.AddRazorPages();
             services.AddServerSideBlazor();
             services.AddScoped<AuthenticationStateProvider, RevalidatingIdentityAuthenticationStateProvider<MyIdentityUser>>();
             services.AddDatabaseDeveloperPageExceptionFilter();
             services.AddTransient<GameViewModel>();
+            services.AddScoped<ScoreService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

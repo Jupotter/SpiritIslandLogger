@@ -2,7 +2,9 @@
 @page "/games"
 @using SpiritIslandLogger.Web.Data
 @using Microsoft.EntityFrameworkCore
+@using SpiritIslandLogger.Web.Service
 @inject ApplicationDbContext Context
+@inject ScoreService         ScoreService;
 
 <h3>Games</h3>
 
@@ -19,82 +21,90 @@ else
 {
     <table class="table">
         <thead>
-        <tr>
-            <th>Id</th>
-            <th>Date</th>
-            <th>Players</th>
-            <th>Adversary</th>
-            <th>Level</th>
-            <th>Victory</th>
-            <th>Score</th>
-        </tr>
+            <tr>
+                <th>Id</th>
+                <th>Date</th>
+                <th>Players</th>
+                <th>Adversary</th>
+                <th>Level</th>
+                <th>Victory</th>
+                <th>Score</th>
+            </tr>
         </thead>
         <tbody>
-        @foreach (var game in games)
-        {
-            <tr>
-                @{
-                    var link = $"/game/{game.Id}/details";
-                    <td>@game.Id</td>
-                    <td>
-                        <NavLink href="@link">
-                            @game.Date.ToString("D")
-                        </NavLink>
-                    </td>
-                    <td>
-                        <NavLink href="@link">
-                            @game.Players.Count
-                        </NavLink>
-                    </td>
-                    <td>
-                        <NavLink href="@link">
-                            @if (game.Adversary != null)
-                            {
-                                <span>@game.Adversary.Name</span>
-                            }
-                            else
-                            {
-                                <span>None</span>
-                            }
-                        </NavLink>
-                    </td>
+            @foreach (var game in games)
+            {
+                <tr>
+                    @{
+                        var link = $"/game/{game.Id}/details";
+                        <td>@game.Id</td>
+                        <td>
+                            <NavLink href="@link">
+                                @game.Date.ToString("D")
+                            </NavLink>
+                        </td>
+                        <td>
+                            <NavLink href="@link">
+                                @game.PlayerCount
+                            </NavLink>
+                        </td>
+                        <td>
+                            <NavLink href="@link">
+                                @if (string.IsNullOrEmpty(game.AdversaryName))
+                                {
+                                    <span>None</span>
+                                }
+                                else
+                                {
+                                    <span>@game.AdversaryName</span>
+                                }
+                            </NavLink>
+                        </td>
 
-                    <td>
-                        <NavLink href="@link">
-                            @if (game.AdversaryLevel.HasValue)
-                            {
-                                <span>@game.AdversaryLevel</span>
-                            }
-                            else
-                            {
-                                <span>-</span>
-                            }
-                        </NavLink>
-                    </td>
+                        <td>
+                            <NavLink href="@link">
+                                @if (game.AdversaryLevel.HasValue)
+                                {
+                                    <span>@game.AdversaryLevel</span>
+                                }
+                                else
+                                {
+                                    <span>-</span>
+                                }
+                            </NavLink>
+                        </td>
 
-                    <td>
-                        <NavLink href="@link">
-                            @game.Victory
-                        </NavLink>
-                    </td>
+                        <td>
+                            <NavLink href="@link">
+                                @game.Victory
+                            </NavLink>
+                        </td>
 
-                    <td>
-                        <NavLink href="@link">
-                            @game.Score
-                        </NavLink>
-                    </td>
-                }
-            </tr>
-        }
+                        <td>
+                            <NavLink href="@link">
+                                @game.Score
+                            </NavLink>
+                        </td>
+                    }
+                </tr>
+            }
         </tbody>
     </table>
 }
 
 <button @onclick="RecalculateScores">Recalculate Scores</button>
+<div>
+    <label for="recalculate-all-checkbox">Recalculate all</label>
+    <input id="recalculate-all-checkbox" type="checkbox" @bind="RecalculateAll"/>
+</div>
 
 @code {
 #nullable enable
-    List<Game>? games;
+    List<GameListModel>? games;
+
+    bool RecalculateAll { get; set; }
+
+    private record GameListModel(DateTimeOffset Date, int Id, int PlayerCount, string? AdversaryName, int? AdversaryLevel, bool Victory, int? Score);
 
     protected override async Task OnInitializedAsync()
     {
@@ -102,61 +112,27 @@ else
                                        .Include(g => g.Players)
                                        .Include(g => g.Adversary)
                                        .ThenInclude(a => a.Levels)
+                                       .AsSingleQuery()
                                        .OrderByDescending(g => g.Date);
 
-        games = await gameQuery
-                         .ToListAsync();
+        games = await gameQuery.Select(g => new GameListModel(g.Date, g.Id, g.Players.Count, g.Adversary.Name, g.AdversaryLevel, g.Victory, g.Score))
+                               .ToListAsync();
     }
 
 
     private async Task RecalculateScores()
     {
-        var games = Context.Games
-                           .Include(g => g.Players)
-                           .Include(g => g.Adversary)
-                           .ThenInclude(a => a.Levels)
-                           .Where(g => !g.Score.HasValue);
+        IQueryable<Game> games = Context.Games;
+
+        if (!RecalculateAll)
+        {
+            games = games.Where(g => !g.Score.HasValue);
+        }
 
         foreach (var game in games)
         {
-            game.Score = GetScore(game);
+            game.Score = await ScoreService.GetScore(game);
         }
         await Context.SaveChangesAsync();
-    }
-
-    private int? GetScore(Game game)
-    {
-        if (game.ManualScore.HasValue)
-            return game.ManualScore;
-        if (game.Players?.Count > 0      &&
-            game.DahanLeft.HasValue      &&
-            game.BlightCount.HasValue    &&
-            game.BlightedIsland.HasValue &&
-            game.InvaderCardsLeft.HasValue)
-        {
-            var score = game.DahanLeft / game.Players.Count - game.BlightCount / game.Players.Count;
-
-            int difficulty = 0;
-            int deckSize   = 12;
-            if (game.Adversary != null && game.AdversaryLevel.HasValue && game.Adversary.Levels != null)
-            {
-                var level = game.Adversary.Levels.First(l => l.Level == game.AdversaryLevel.Value);
-                difficulty = level.Difficulty;
-                deckSize   = level.DeckSize;
-            }
-
-            if (game.Victory)
-            {
-                score += 5 * difficulty + 10 + 2 * game.InvaderCardsLeft;
-            }
-            else
-            {
-                score += 2 * difficulty + 2 * (deckSize - game.InvaderCardsLeft);
-            }
-
-            return score;
-        }
-
-        return null;
     }
 }

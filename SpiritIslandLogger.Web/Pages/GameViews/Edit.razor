@@ -178,8 +178,7 @@
 
     private Task SubmitFormAsync()
     {
-        ViewModel.SaveGameAsync().ContinueWith(_ => Navigation.NavigateTo(GameId.HasValue ? $"/game/{GameId}/details" : "/games"));
-        return Task.CompletedTask;
+        return ViewModel.SaveGameAsync().ContinueWith(_ => Navigation.NavigateTo(GameId.HasValue ? $"/game/{GameId}/details" : "/games"));
     }
 
 }
