@@ -8,5 +8,9 @@ namespace SpiritIslandLogger.Web.Data
         [Required] public virtual Game    Game   { get; set; } = null!;
         [Required] public virtual Player? Player { get; set; } = null!;
         [Required] public virtual Spirit? Spirit { get; set; } = null!;
+
+        public int SpiritId { get; set; }
+        public int PlayerId { get; set; }
+        public int GameId   { get; set; }
     }
 }

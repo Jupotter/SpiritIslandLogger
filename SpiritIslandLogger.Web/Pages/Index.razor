@@ -1,8 +1,7 @@
 ﻿@page "/"
 @using SpiritIslandLogger.Web.Data
 @using Microsoft.EntityFrameworkCore
-@using Microsoft.EntityFrameworkCore.Metadata.Internal
-@using System.Diagnostics
+@using SpiritIslandLogger.Web.Service
 
 <h1>Write their Words in Stone</h1>
 
@@ -44,32 +43,47 @@
     </div>
     <div class="row">
         <div class="col-lg-6">
-            <ApexChart TItem="GamesStats" Title="Wins by difficulty" ChartType="ChartType.Line" XAxisType="XaxisType.Category"
+            <ApexChart TItem="StatsService.DifficultyStats" Title="Wins by difficulty" ChartType="ChartType.Line" XAxisType="XaxisType.Category"
                        Options="chart1Options">
-                <ApexSeries TItem="GamesStats"
+                <ApexSeries TItem="StatsService.DifficultyStats"
                             Items="GamesByAdversaryLevel"
                             Name="Win Percent"
                             XValue="@(e => e.Difficulty)"
                             YAggregate="@(e => Math.Floor(e.Sum(g => g.WinCount) * 100 / ((decimal)e.Sum(g => g.Count))))"
-                            OrderBy="@(e => e.X)"/>
-                <ApexSeries TItem="GamesStats"
+                            OrderBy="@(e => e.X)" />
+                <ApexSeries TItem="StatsService.DifficultyStats"
                             Items="GamesByAdversaryLevel"
                             Name="Win Count"
                             XValue="@(e => e.Difficulty)"
                             YAggregate="@(e => Math.Floor((decimal)(e.Sum(g => g.WinCount))))"
-                            OrderBy="@(e => e.X)"/>
+                            OrderBy="@(e => e.X)" />
 
             </ApexChart>
         </div>
         <div class="col-lg-6">
-            <ApexChart TItem="GamesStats" Title="Average Score by difficulty" ChartType="ChartType.Line" XAxisType="XaxisType.Category"
+            <ApexChart TItem="StatsService.DifficultyStats" Title="Average Score by difficulty" ChartType="ChartType.Line" XAxisType="XaxisType.Category"
                        Options="chart2Options">
-                <ApexSeries TItem="GamesStats"
+                <ApexSeries TItem="StatsService.DifficultyStats"
                             Items="GamesByAdversaryLevel"
                             Name="Mean Score"
                             XValue="@(e => e.Difficulty)"
                             YAggregate="@(e => Math.Floor(e.Sum(g => g.MeanScore * g.Count) / e.Sum(g => g.Count)))"
-                            OrderBy="@(e => e.X)"/>
+                            OrderBy="@(e => e.X)" />
+            </ApexChart>
+        </div>
+
+        <div class="col-lg-12">
+            <ApexChart TItem="SpiritStatsView" Title="Spirit Stats" ChartType="ChartType.Bar" XAxisType="XaxisType.Category">
+                <ApexSeries TItem="SpiritStatsView"
+                            Items="SpiritStats"
+                            Name="Games"
+                            XValue="@(e => e.SpiritName)"
+                            YValue="@(e => e.GameCount)" />
+                <ApexSeries TItem="SpiritStatsView"
+                            Items="SpiritStats"
+                            Name="Victories"
+                            XValue="@(e => e.SpiritName)"
+                            YValue="@(e => e.WinCount)" />
             </ApexChart>
         </div>
     </div>
@@ -81,6 +95,8 @@ else
 
 @inject ApplicationDbContext Context
 
+@inject StatsService StatsService
+
 @code {
 #nullable enable
 
@@ -89,71 +105,58 @@ else
     int? GameCount =>
         GamesByAdversaryLevel?.Sum(g => g.Count) ?? 0;
 
-    ApexChartOptions<GamesStats> chart1Options = new()
-                                                 {
-                                                     Yaxis = new List<YAxis>
-                                                             {
-                                                                 new()
-                                                                 {
-                                                                     SeriesName = "Win Percent",
-                                                                     Opposite = true,
-                                                                     AxisTicks = new()
-                                                                                 {
-                                                                                     Show = true,
-                                                                                 },
-                                                                     Min = 0,
-                                                                     Max = 100
-                                                                 },
-                                                                 new()
-                                                                 {
-                                                                     SeriesName = "Win Count",
-                                                                     Min = 0,
-                                                                 },
-                                                             }
-                                                 };
+    readonly ApexChartOptions<StatsService.DifficultyStats> chart1Options
+        = new()
+        {
+            Yaxis = new List<YAxis>
+                      {
+                          new()
+                          {
+                              SeriesName = "Win Percent",
+                              Opposite = true,
+                              AxisTicks = new()
+                                          {
+                                              Show = true,
+                                          },
+                              Min = 0,
+                              Max = 100
+                          },
+                          new()
+                          {
+                              SeriesName = "Win Count",
+                              Min = 0,
+                          },
+                      }
+        };
 
-    ApexChartOptions<GamesStats> chart2Options = new ApexChartOptions<GamesStats>
-                                                 {
-                                                     Yaxis = new List<YAxis>
-                                                             {
-                                                                 new()
-                                                                 {
-                                                                     Min = 0
-                                                                 }
-                                                             }
-                                                 };
+    readonly ApexChartOptions<StatsService.DifficultyStats> chart2Options
+        = new()
+        {
+            Yaxis = new List<YAxis>
+                      {
+                          new()
+                          {
+                              Min = 0
+                          }
+                      }
+        };
 
     protected override async Task OnInitializedAsync()
     {
-        var queryable = from game in Context.Games.Where(g => g.AdversaryId.HasValue)
-                        join adversaryLevel in Context.AdversaryLevels
-                            on new { game.AdversaryId, Level = game.AdversaryLevel }
-                            equals new { AdversaryId = (int?)adversaryLevel.AdversaryId, Level = (int?)adversaryLevel.Level }
-                            into gamesGj
-                        from adversaryLevel in gamesGj.DefaultIfEmpty()
-                        group game by new { adversaryLevel.Difficulty, game.AdversaryId, game.AdversaryLevel }
-                        into grouping
-                        select new
-                               {
-                                   grouping.Key.Difficulty,
-                                   grouping.Key.AdversaryId,
-                                   grouping.Key.AdversaryLevel,
-                                   Count = grouping.Count(),
-                                   WinCount = grouping.Count(g => g.Victory),
-                                   MeanScore = grouping.Average(g => g.Score)
-                               };
+        GamesByAdversaryLevel = await StatsService.GetDifficultyStats().ToListAsync();
 
-        var result = await queryable.ToListAsync();
-        GamesByAdversaryLevel = result.Select(g => new GamesStats(g.Difficulty, g.AdversaryId.Value, g.AdversaryLevel ?? 0, g.Count, g.WinCount, (decimal?)g.MeanScore ?? 0)).ToList();
+        var spiritStatsTmp = await StatsService.GetSpiritStats().ToListAsync();
+
+        SpiritStats = spiritStatsTmp.Select(s => new SpiritStatsView(Context.Spirits.Find(s.SpiritId).Name, s.GameCount, s.WinCount)).ToList();
 
         Adversaries = await Context.Adversaries.ToListAsync();
 
         loaded = true;
     }
 
-    private record GamesStats(int Difficulty, int AdversaryId, int AdversaryLevel, int Count, int WinCount, decimal MeanScore);
+    private record SpiritStatsView(string SpiritName, int GameCount, int WinCount);
 
-
-    List<GamesStats>? GamesByAdversaryLevel { get; set; }
+    List<SpiritStatsView>? SpiritStats { get; set; }
+    List<StatsService.DifficultyStats>? GamesByAdversaryLevel { get; set; }
     List<Adversary>? Adversaries { get; set; }
 }

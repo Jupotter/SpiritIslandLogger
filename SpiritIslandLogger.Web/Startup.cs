@@ -47,6 +47,7 @@ namespace SpiritIslandLogger.Web
             services.AddDatabaseDeveloperPageExceptionFilter();
             services.AddTransient<GameViewModel>();
             services.AddScoped<ScoreService>();
+            services.AddScoped<StatsService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
