@@ -1,0 +1,51 @@
+﻿@page "/players"
+@page "/player"
+
+@using SpiritIslandLogger.Web.Data
+@using Microsoft.EntityFrameworkCore
+@inject ApplicationDbContext Context
+
+<h3>Players</h3>
+
+@if (players == null)
+{
+    <p>
+        <em>Loading...</em>
+    </p>
+}
+else
+{
+    <table class="table">
+        <thead>
+        <tr>
+            <th>Name</th>
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var player in players)
+        {
+            <tr>
+                <td>
+                    @{
+                        var link = $"/player/{player.Id}/details";
+            <NavLink href="@link">
+                <span>@player.Name</span>
+            </NavLink>
+                    }
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}
+
+@code {
+#nullable enable
+    List<Player>? players;
+
+    protected override async Task OnInitializedAsync()
+    {
+        players = await Context.Players.OrderBy(p => p.Name).ToListAsync();
+    }
+
+}

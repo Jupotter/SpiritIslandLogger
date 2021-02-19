@@ -1,0 +1,41 @@
+﻿@page "/player/{PlayerId:int}/details"
+
+@using SpiritIslandLogger.Web.Data
+@inject ApplicationDbContext DbContext
+@inject NavigationManager Navigation
+
+@if (Player == null)
+{
+    <p>
+        <em>Loading...</em>
+    </p>
+}
+else
+{
+    <h3>@Player.Name</h3>
+
+    <StatsPage PlayerId="PlayerId"></StatsPage>
+}
+
+@code {
+#nullable enable
+    Player? Player { get; set; }
+
+
+    [Parameter]
+    public int? PlayerId { get; set; }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await base.OnParametersSetAsync();
+
+        if (!PlayerId.HasValue)
+        {
+            Navigation.NavigateTo("/spirit");
+            return;
+        }
+
+        Player = await DbContext.Players.FindAsync(PlayerId);
+    }
+
+}

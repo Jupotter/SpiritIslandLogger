@@ -1,7 +1,4 @@
-﻿using System.Collections;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
+﻿using System.Linq;
 using SpiritIslandLogger.Web.Data;
 
 namespace SpiritIslandLogger.Web.Service
@@ -15,9 +12,9 @@ namespace SpiritIslandLogger.Web.Service
                                       int     WinCount,
                                       decimal MeanScore);
 
-        public record SpiritStats(int    SpiritId,
-                                  int    GameCount,
-                                  int    WinCount);
+        public record SpiritStats(int SpiritId,
+                                  int GameCount,
+                                  int WinCount);
 
         private readonly ApplicationDbContext dbContext;
 
@@ -26,9 +23,18 @@ namespace SpiritIslandLogger.Web.Service
             this.dbContext = dbContext;
         }
 
-        public IQueryable<DifficultyStats> GetDifficultyStats()
+        public IQueryable<DifficultyStats> GetDifficultyStats(int? playerId = null)
         {
-            var queryable = from game in dbContext.Games.Where(g => g.AdversaryId.HasValue)
+            IQueryable<Game> source = dbContext.Games;
+            if (playerId.HasValue)
+            {
+                source = from game in dbContext.Games
+                         join gamePlayer in dbContext.GamePlayers.Where(g => g.PlayerId == playerId)
+                             on game.Id equals gamePlayer.GameId
+                         select game;
+            }
+
+            var queryable = from game in source.Where(g => g.AdversaryId.HasValue)
                             join adversaryLevel in dbContext.AdversaryLevels
                                 on new
                                    {
@@ -68,10 +74,16 @@ namespace SpiritIslandLogger.Web.Service
                 (decimal?)g.MeanScore ?? 0));
         }
 
-        public IQueryable<SpiritStats> GetSpiritStats()
+        public IQueryable<SpiritStats> GetSpiritStats(int? playerId = null)
         {
+            IQueryable<GamePlayer> gamePlayers = dbContext.GamePlayers;
+            if (playerId != null)
+            {
+                gamePlayers = gamePlayers.Where(g => g.PlayerId == playerId);
+            }
+
             var query = dbContext.Spirits
-                                 .Join(dbContext.GamePlayers,
+                                 .Join(gamePlayers,
                                       spirit => spirit.Id,
                                       gamePlayer => gamePlayer.SpiritId,
                                       (spirit, gamePlayer) => new

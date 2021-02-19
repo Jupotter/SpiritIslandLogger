@@ -1,0 +1,195 @@
+﻿@using SpiritIslandLogger.Web.Data
+@using SpiritIslandLogger.Web.Service
+@using Microsoft.EntityFrameworkCore
+
+
+@if (loaded)
+{
+    <div class="row">
+        <div class="col-sm-3">
+            <p>@GameCount games played</p>
+            <p>@WinCount victories</p>
+            <p>@(Math.Floor(WinCount / (decimal)GameCount * 100))% of games where won</p>
+        </div>
+        <table class="table col-lg-12">
+            <thead>
+            <tr>
+                <th class="col-1"></th>
+                @foreach (var adversary in Adversaries.OrderBy(a => a.Name))
+                {
+                    <th scope="col" class="col-1">@adversary.Name</th>
+                }
+            </tr>
+            </thead>
+            <tbody>
+            @for (int level = 0; level < 7; level++)
+            {
+                <tr>
+                    <th scope="row">Level @level</th>
+                    @foreach (var adversaryId in Adversaries.OrderBy(a => a.Name).Select(a => a.Id))
+                    {
+                        var value = GamesByAdversaryLevel?.Find(g => g.AdversaryId == adversaryId && g.AdversaryLevel == level);
+                        @if (value != null)
+                        {
+                            <td>@value.WinCount/@value.Count</td>
+                        }
+                        else
+                        {
+                            <td>-</td>
+                        }
+                    }
+                </tr>
+            }
+            </tbody>
+        </table>
+        <div class="col-lg-6">
+            <ApexChart TItem="StatsService.DifficultyStats" Title="Wins by difficulty" ChartType="ChartType.Line" XAxisType="XaxisType.Category"
+                       Options="chart1Options">
+                <ApexSeries TItem="StatsService.DifficultyStats"
+                            Items="GamesByAdversaryLevel"
+                            Name="Win Percent"
+                            XValue="@(e => e.Difficulty)"
+                            YAggregate="@(e => Math.Floor(e.Sum(g => g.WinCount) * 100 / ((decimal)e.Sum(g => g.Count))))"
+                            OrderBy="@(e => e.X)"/>
+                <ApexSeries TItem="StatsService.DifficultyStats"
+                            Items="GamesByAdversaryLevel"
+                            Name="Win Count"
+                            XValue="@(e => e.Difficulty)"
+                            YAggregate="@(e => Math.Floor((decimal)(e.Sum(g => g.WinCount))))"
+                            OrderBy="@(e => e.X)"/>
+
+            </ApexChart>
+        </div>
+        <div class="col-lg-6">
+            <ApexChart TItem="StatsService.DifficultyStats" Title="Average Score by difficulty" ChartType="ChartType.Line" XAxisType="XaxisType.Category"
+                       Options="chart2Options">
+                <ApexSeries TItem="StatsService.DifficultyStats"
+                            Items="GamesByAdversaryLevel"
+                            Name="Mean Score"
+                            XValue="@(e => e.Difficulty)"
+                            YAggregate="@(e => Math.Floor(e.Sum(g => g.MeanScore * g.Count) / e.Sum(g => g.Count)))"
+                            OrderBy="@(e => e.X)"/>
+            </ApexChart>
+        </div>
+
+        <div class="col-lg-12">
+            <ApexChart TItem="SpiritStatsView" Title="Spirit Stats" ChartType="ChartType.Bar" XAxisType="XaxisType.Category">
+                <ApexSeries TItem="SpiritStatsView"
+                            Items="SpiritStats"
+                            Name="Games"
+                            XValue="@(e => e.SpiritName)"
+                            YValue="@(e => e.GameCount)"/>
+                <ApexSeries TItem="SpiritStatsView"
+                            Items="SpiritStats"
+                            Name="Victories"
+                            XValue="@(e => e.SpiritName)"
+                            YValue="@(e => e.WinCount)"/>
+            </ApexChart>
+        </div>
+    </div>
+}
+else
+{
+    <div>Loading statistics</div>
+}
+
+
+@inject ApplicationDbContext Context
+
+@inject StatsService StatsService
+
+@code {
+#nullable enable
+
+    [Parameter]
+    public int? PlayerId { get; set; }
+
+    bool loaded = false;
+
+    int GameCount { get; set; }
+    int WinCount { get; set; }
+
+
+    readonly ApexChartOptions<StatsService.DifficultyStats> chart1Options
+        = new()
+          {
+              Yaxis = new List<YAxis>
+                      {
+                          new()
+                          {
+                              SeriesName = "Win Percent",
+                              Opposite = true,
+                              AxisTicks = new()
+                                          {
+                                              Show = true,
+                                          },
+                              Min = 0,
+                              Max = 100
+                          },
+                          new()
+                          {
+                              SeriesName = "Win Count",
+                              Min = 0,
+                          },
+                      }
+          };
+
+    readonly ApexChartOptions<StatsService.DifficultyStats> chart2Options
+        = new()
+          {
+              Yaxis = new List<YAxis>
+                      {
+                          new()
+                          {
+                              Min = 0
+                          }
+                      }
+          };
+
+    readonly ApexChartOptions<GaugeValue> gaugeOptions =
+        new()
+        {
+            PlotOptions = new PlotOptions()
+                          {
+                              RadialBar = new PlotOptionsRadialBar()
+                                          {
+                                              StartAngle = -45,
+                                              EndAngle = 45,
+                                              Track = new Track()
+                                                      {
+                                                          StartAngle = -45,
+                                                          EndAngle = 45
+                                                      }
+                                          }
+                          }
+        };
+
+    protected override async Task OnInitializedAsync()
+    {
+        Adversaries = await Context.Adversaries.ToListAsync();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        loaded = false;
+
+        GamesByAdversaryLevel = await StatsService.GetDifficultyStats(PlayerId).ToListAsync();
+
+        GameCount = GamesByAdversaryLevel.Sum(g => g.Count);
+        WinCount = GamesByAdversaryLevel.Sum(g => g.WinCount);
+
+
+        var spiritStatsTmp = await StatsService.GetSpiritStats(PlayerId).ToListAsync();
+        SpiritStats = spiritStatsTmp.Select(s => new SpiritStatsView(Context.Spirits.Find(s.SpiritId).Name, s.GameCount, s.WinCount))
+                                    .OrderByDescending(s => s.GameCount)
+                                    .ToList();
+
+        loaded = true;
+    }
+
+    private record SpiritStatsView(string SpiritName, int GameCount, int WinCount);
+
+    List<SpiritStatsView>? SpiritStats { get; set; }
+    List<StatsService.DifficultyStats>? GamesByAdversaryLevel { get; set; }
+    List<Adversary>? Adversaries { get; set; }
+}
