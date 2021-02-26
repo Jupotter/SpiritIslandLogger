@@ -40,7 +40,15 @@ namespace SpiritIslandLogger.Web.ViewModel
             set
             {
                 this.playerCount = value;
-                GamePlayers      = Enumerable.Range(0, this.playerCount).Select(_ => new GamePlayerVm()).ToList();
+                if (GamePlayers.Count == playerCount)
+                    return;
+                if (GamePlayers.Count > playerCount)
+                    GamePlayers = GamePlayers.Take(playerCount).ToList();
+                else
+                    GamePlayers = GamePlayers
+                                 .Concat(Enumerable.Range(0, playerCount - GamePlayers.Count)
+                                                   .Select(_ => new GamePlayerVm()))
+                                 .ToList();
             }
         }
 
@@ -177,7 +185,6 @@ namespace SpiritIslandLogger.Web.ViewModel
             Saving = true;
             try
             {
-                this.game.AdversaryLevel   = AdversaryLevel;
                 this.game.BlightCount      = BlightLeft;
                 this.game.BlightedIsland   = Blighted;
                 this.game.DahanLeft        = DahanLeft;
@@ -186,10 +193,9 @@ namespace SpiritIslandLogger.Web.ViewModel
                 this.game.FearLevel        = FearLevel;
                 this.game.ManualScore      = Score;
                 this.game.InvaderCardsLeft = CardsLeft;
-                this.game.Adversary = AdversaryId.HasValue
-                                          ? await this.dbContext.Adversaries.FindAsync(AdversaryId.Value)
-                                          : null;
-                this.game.Comment = Comment;
+                this.game.AdversaryLevel   = AdversaryLevel;
+                this.game.AdversaryId      = AdversaryId;
+                this.game.Comment          = Comment;
 
                 var gamePlayers = new List<GamePlayer>();
                 foreach (var gamePlayerVm in GamePlayers)
